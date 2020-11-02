@@ -82,7 +82,7 @@ trait LoginTrait
             $this->getUserInLoginTrait()->ClearCache($user['id']);
         }
 
-        session(['is_login_'.$data['view_cid'] => $data]);
+        session(['is_login' => $data]);
         return ['name'=>$data['name'], 'balance'=>$data['balance'], 'view_cid'=>$data['view_cid']];
     }
     /**
