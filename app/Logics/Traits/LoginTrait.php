@@ -34,7 +34,7 @@ trait LoginTrait
      * @param int $customer_id
      * @param array $sess 用户缓存信息
      */
-    public function resetUserViewCid($sess = []) {
+    public function resetUserViewCid($customer_id,$sess = []) {
         if (!$sess) {
             $sess = $this->loginGetSession(true);
         }
