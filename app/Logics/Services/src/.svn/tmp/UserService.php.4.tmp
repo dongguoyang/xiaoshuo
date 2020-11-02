@@ -1,0 +1,199 @@
+<?php
+
+namespace App\Logics\Services\src;
+
+use App\Logics\Repositories\src\CommonSetRepository;
+use App\Logics\Repositories\src\CustomerRepository;
+use App\Logics\Repositories\src\DomainRepository;
+use App\Logics\Repositories\src\ExtendLinkRepository;
+use App\Logics\Repositories\src\PlatformWechatRepository;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Repositories\src\WechatConfigRepository;
+use App\Logics\Services\Service;
+use App\Logics\Traits\PushmsgTrait;
+use App\Logics\Traits\WechatTrait;
+
+class UserService extends Service {
+    use WechatTrait, PushmsgTrait;
+
+    protected $users;
+    protected $domains;
+    protected $commonSets;
+    protected $platformWechats;
+    protected $extendLinks;
+    protected $wechatConfigs;
+    protected $customers;
+
+	public function Repositories() {
+		return [
+		    'platformWechats'   => PlatformWechatRepository::class,
+            'commonSets'    => CommonSetRepository::class,
+            'domains'       => DomainRepository::class,
+            'users'         => UserRepository::class,
+            'extendLinks'   => ExtendLinkRepository::class,
+            'wechatConfigs' => WechatConfigRepository::class,
+            'customers'     => CustomerRepository::class,
+		];
+	}
+    /**
+     * H5 微信授权登录
+     */
+    public function WechatLogin() {
+        $sess = $this->loginGetSession(true);
+        if ($sess['id']) {
+            return $this->Logined($sess);
+        }
+        if (!isset($_GET['code']) || !$_GET['code']) {
+            // 没有授权 code 跳转获取授权code
+            $customer_id = request()->input('customer_id');
+            if (!$customer_id) {
+                throw new \Exception('未定义平台信息', 2000);
+            }
+
+            $state = [
+                'c'  => $customer_id,
+                'p'  => WechatStateStr(request()->input('backurl'), 'encode'),
+                'el' => request()->input('el'),
+                'od' => request()->input('otherdo'),
+            ];
+            return $this->ToAuthCode($customer_id, $state);
+        } else {
+            $state = $this->stateInfo(); // 获取state信息
+            if ($host = $this->domains->TypeDomain(5, $state['c'])) {
+                // 不是落地域名就跳转外推展示落地域名再执行获取用户信息
+                return redirect($host . route('h5wechat.login', request()->input(), false));
+            }
+           /* if ($this->domains->TypeDomain(4, $state['c'])) {
+                // 菜单域名；跳转主页展示域名
+                if ($host = $this->domains->TypeDomain(2, $state['c'])) {
+                    // 不是落地域名就跳转落地域名再执行获取用户信息
+                    return redirect($host . route('h5wechat.login', request()->input(), false));
+                }
+            } else{
+                $host = $this->domains->TypeDomain(5, $state['c']);
+                // 不是落地域名就跳转外推展示落地域名再执行获取用户信息
+                return redirect($host . route('h5wechat.login', request()->input(), false));
+            }*/
+            // 通过授权 code 获取用户详细信息
+            $wechat_userinfo = $this->AuthToken2Openid();
+
+            return $this->DoLogin('h5wechat', $wechat_userinfo);
+        }
+
+    }
+
+    /**
+     * 执行登录
+     * @param string $type
+     * @param array $data
+     */
+    private function DoLogin($type, $data) {
+        switch ($type) {
+            case 'h5wechat':
+                $user = $this->users->findBy('unionid', $data['unionid'], $this->users->model->fields);
+                if (!$user) {
+                    $user = $this->register('h5wechat', $data);
+                }
+        }
+
+        $state = $this->stateInfo(); // 获取state信息
+        if ($user['subscribe'] && $host = $this->domains->TypeDomain(2, $state['c'])) {
+            $now = time();
+            $pass = encrypt(json_encode(['id'=>$user['id'], 'passwd'=>md5($user['id'] . 'zmr' . $now), 'time'=>$now]));
+            return redirect($host . route('user.redirectlogin', ['pass'=>$pass, 'state'=>request()->input('state')], false));
+        }
+
+        $this->loginSaveToSession($user);
+        return $this->Logined($user);
+    }
+
+    /**
+     * H5 微信授权登录域名不对的跳转登录
+     * @param string $type
+     * @param array $data
+     */
+    public function RedirectLogin() {
+        $pass = request()->input('pass');
+        $pass = decrypt($pass);
+        $data = json_decode($pass, 1);
+        if ($data['passwd'] != md5($data['id'] . 'zmr' . $data['time'])) {
+            return $this->result([], 2000, '数据异常');
+        }
+        if ($data['time'] + 60 < time()) {
+            return $this->result([], 2000, '登录异常');
+        }
+        $user = $this->users->UserCacheInfo($data['id']);
+
+        $this->loginSaveToSession($user);
+        return $this->Logined($user);
+    }
+    /**
+     * 执行注册
+     * @param string $type H5微信登录 h5wechat
+     * @param array $data
+     */
+    private function register($type, $data) {
+        switch ($type) {
+            case 'h5wechat':
+                $state = $this->stateInfo(); // 获取state信息
+
+                $wechat = $this->platformWechats->getWechatForCustomer($state['c']); //获取公众平台信息
+                $data = [
+                    'name'      => $data['nickname'],
+                    'img'       => $data['headimgurl'],
+                    'sex'       => $data['sex'],
+                    'subscribe' => isset($data['subscribe']) ? $data['subscribe'] : 0,
+                    'openid'    => $data['openid'],
+                    'unionid'   => $data['unionid'],
+                    'password'  => md5('123456' . 'zmrpasswd'),
+                    'invite_code'   => 0,
+                    'customer_id'   => $state['c'],
+                    'platform_wechat_id'    => $wechat['id'],
+                    'extend_link_id'        => (isset($state['el']) && is_numeric($state['el'])) ? $state['el'] : 0,
+                ];
+                break;
+        }
+
+        $user = $this->users->create($data);
+
+        if ($user['extend_link_id']) {
+            // 推广链接增加用户
+            $this->extendLinks->UpdateInfo($user['extend_link_id'], ['user'=>1]);
+        }
+        return $user;
+    }
+    /**
+     * 登录成功；跳转首页
+     */
+    private function Logined($user) {
+        $state = $this->stateInfo();
+
+        if (request()->input('od') == 'secondpush') {
+            $this->pushSecondMsg($user, $state['n'], $state['c']); // 执行新用户二次推送
+        }
+
+        if (isset($state['p']) && $state['p']) {
+            return redirect(WechatStateStr($state['p'], 'decode')); // 返回调用登录页面
+        }
+
+        if (isset($state['el']) && $state['el']) {
+            return redirect(route('novel.extendpage', ['extend_link_id'=>$state['el'], 'customer_id'=>$state['c']]));
+        }
+
+        return redirect(route('novel.toindex', ['cid'=>$user['customer_id'], 'otherdo'=>$state['od']]));
+    }
+
+    /**
+     * 获取用户信息
+     */
+    public function UserInfo() {
+        $info = $this->loginGetSession(true);
+        $uncolumn = ['openid', 'unionid', 'password', 'remember_token', 'customer_id', 'platform_wechat_id'];
+        foreach ($uncolumn as $v) {
+            unset($info[$v]);
+        }
+
+        return $this->result($info);
+    }
+
+}

@@ -1,0 +1,184 @@
+<?php
+namespace App\Logics\Repositories\src;
+
+use App\Logics\Models\NovelSection;
+use App\Logics\Repositories\Repository;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+
+class NovelSectionRepository extends Repository {
+    public $pagenum = 100;
+
+	public function model() {
+		return NovelSection::class;
+	}
+
+    /**
+     * 获取小说信息
+     * @param int $novel_id
+     * @param int $section_num 章节序号
+     * @return array
+     */
+    public function SectionInfo($novel_id, $section_num) {
+        $key = config('app.name') . 'novel_'.$novel_id.'_section_'.$section_num.'_info';
+
+        $data = Cache::remember($key, 11440, function () use ($novel_id, $section_num) {
+            $data = $this->findByMap([
+                ['novel_id', $novel_id],
+                ['num', $section_num],
+            ], $this->model->fields);
+
+            $data = $this->toArr($data);
+            if ($data) {
+                $data['content'] = (substr($data['content'], 0, 4) != 'http') ? config('app.url') . $data['content'] : $data['content'];
+                $data['content'] = @file_get_contents($data['content']);
+            }
+
+            return $data;
+        });
+
+        if ($data && (!$data['content'] || strlen($data['content'])<300) && Cache::has($key)) {
+            Cache::forget($key);
+        }
+
+        return $data;
+    }
+    /**
+     * 获取小说信息
+     * @param int $novel_id
+     * @param int $page 第几页
+     * @return array
+     */
+    public function SectionList($novel_id, $page, $order) {
+        $key = config('app.name') . 'novel_section_list_'.$novel_id.'_page_'.$page.'_order_'.$order;
+
+        return Cache::remember($key, 1440, function () use ($novel_id, $page, $order) {
+            $cond = [
+                ['novel_id', '=', $novel_id]
+            ];
+            if(strtolower($order) != 'desc') {
+                // 升序
+                $offset = $this->pagenum * ($page - 1);
+                $cond[] = ['num', '>', $offset];
+            } else {
+                // 降序
+                $offset = $this->pagenum * ($page - 1);
+                $cond[] = ['num', '<=', DB::raw("(SELECT MAX(`num`) - {$offset} FROM `novel_sections` WHERE `novel_id` = {$novel_id})")];
+            }
+
+            $data = $this->model
+                ->where($cond)
+                ->select(['novel_id', 'num', 'title'])
+                ->orderBy('num', $order)
+                ->limit($this->pagenum)
+                ->get();
+            $data = $this->toArr($data);
+            $data = $this->sectionTitleDelNo($data);
+            return $data;
+        });
+    }
+    /**
+     * 去除章节的第几章；防止重复
+     */
+    private function sectionTitleDelNo($list) {
+        foreach ($list as $k=>$section) {
+            $title = $section['title'];
+            $title = preg_replace('/第.*?章/', '', $title);
+            $title = preg_replace('/第.*?节/', '', $title);
+            $title = preg_replace('/第.*?回/', '', $title);
+            $list[$k]['title'] = $title;
+        }
+
+        return $list;
+    }
+    /**
+     * 获取小说信息
+     * @param int $novel_id
+     * @return array
+     */
+    public function First2Last($novel_id) {
+        $key = config('app.name') . 'novel_section_first2last_'.$novel_id;
+
+        return Cache::remember($key, 60, function () use ($novel_id) {
+            // 获取第一章信息
+            $first = $this->model
+                ->where('novel_id', $novel_id)
+                ->select(['novel_id', 'num', 'title'])
+                ->orderBy('num')
+                ->first();
+            $data['first'] = $this->toArr($first);
+            // 获取最后章信息
+            $last = $this->model
+                ->where('novel_id', $novel_id)
+                ->select(['novel_id', 'num', 'title'])
+                ->orderBy('num', 'desc')
+                ->first();
+            if ($first['num'] < $last['num']) {
+                $data['last'] = $this->toArr($last);
+            }
+            $data = $this->sectionTitleDelNo($data);
+
+            return $data;
+        });
+    }
+
+    /**
+     * 获取推广链接的文案信息
+     * @param int $novel_id
+     * @param int $section
+     */
+    public function ExtendLinkSections($novel_id, $section, $update = false) {
+        $key = config('app.name') . 'extend_link_page_'.$novel_id . '_' . $section;
+
+        if ($update) {
+            return Cache::forget($key);
+        }
+        return Cache::remember($key, 1440, function ()use ($novel_id, $section){
+            $sections = $this->model->where('novel_id', $novel_id)
+                ->where('num', '<=', $section)
+                ->orderBy('num')
+                ->select(['title', 'num', 'content'])
+                ->get();
+            $sections = $this->toArr($sections);
+            foreach ($sections as $k=>$v) {
+                $i = 0;
+                while ($i < 3) {
+                    $content = @file_get_contents($v['content']);
+                    if ($content) break;
+                    $i++;
+                }
+                $sections[$k]['content'] = $content;
+            }
+            return $sections;
+        });
+    }
+
+    /**
+     * 设置章节标题
+     */
+    public function SetTitles(){
+        $pageRows = 200;
+        $count = 0;
+        while (true) {
+            $list1 = $this->model->whereNull('title')->limit($pageRows)->select(['id', 'num', 'title'])->get();
+            foreach ($list1 as $item) {
+                $this->update(['title'=>'第'. $item['num'] .'章'], $item['id']);
+            }
+            $count1 = count($list1);
+            dump('set null num = '.$count1);
+            $list2 = $this->model->where('title', '')->limit($pageRows)->select(['id', 'num', 'title'])->get();
+            foreach ($list2 as $item) {
+                $this->update(['title'=>'第'. $item['num'] .'章'], $item['id']);
+            }
+            $count2 = count($list2);
+            dump('set str=   num = '.$count2);
+
+            $count += $count1 + $count2;
+            if ((!$list1 && !$list2) || (!$count1 && !$count2)) {
+                break;
+            }
+        }
+        dump('本次更新了'.$count .'条数据');
+        return $count;
+    }
+}

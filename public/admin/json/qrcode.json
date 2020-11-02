@@ -1,0 +1,42 @@
+[
+  {
+    "id": 8,
+    "preview_img": "/home/extendpage/qr-footer8-preview.png",
+    "weight": 30
+  },
+  {
+    "id": 1,
+    "preview_img": "/home/extendpage/qr-footer1-preview.png",
+    "weight": 2
+  },
+  {
+    "id": 7,
+    "preview_img": "/home/extendpage/qr-footer7-preview.png",
+    "weight": 0
+  },
+  {
+    "id": 6,
+    "preview_img": "/home/extendpage/qr-footer6-preview.png",
+    "weight": 0
+  },
+  {
+    "id": 5,
+    "preview_img": "/home/extendpage/qr-footer5-preview.png",
+    "weight": 0
+  },
+  {
+    "id": 4,
+    "preview_img": "/home/extendpage/qr-footer4-preview.png",
+    "weight": 0
+  },
+  {
+    "id": 3,
+    "preview_img": "/home/extendpage/qr-footer3-preview.png",
+    "weight": 0
+  },
+  {
+    "id": 2,
+    "preview_img": "/home/extendpage/qr-footer2-preview.png",
+    "weight": 0
+  }
+]

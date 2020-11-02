@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Admin\Models;
+
+use Encore\Admin\Facades\Admin;
+use Illuminate\Database\Eloquent\Builder;
+
+class WechatConfig extends Base
+{
+    protected $table = 'wechat_config';
+    protected $fillable = [
+        'customer_id', 'platform_wechat_id', 'subscribe_msg', 'subscribe_content', 'subscribe_msg_next', 'subscribe_msg_12h', 'menu_list', 'continue_read_tip', 'unpay_tip', 'frist_recharge_tip',
+        'sign_tip', 'pushconf', 'daily_push', 'search_sub', 'user_tags',
+    ];
+    public $fields = [
+        'id',
+        'customer_id', 'platform_wechat_id', 'subscribe_msg', 'subscribe_content', 'subscribe_msg_next', 'subscribe_msg_12h', 'menu_list', 'continue_read_tip', 'unpay_tip', 'frist_recharge_tip',
+        'sign_tip', 'pushconf', 'daily_push', 'search_sub', 'user_tags',
+    ];
+
+    public function platformWechat() {
+        return $this->belongsTo(PlatformWechat::class, 'platform_wechat_id', 'id');
+    }
+    public function customer() {
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+    protected static function boot() {
+        parent::boot();
+
+        static::addGlobalScope('customer_id', function(Builder $builder) {
+            $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+            if($customer['pid']) {
+                $builder->where('customer_id', '=', $customer->id);
+            }
+        });
+    }
+}

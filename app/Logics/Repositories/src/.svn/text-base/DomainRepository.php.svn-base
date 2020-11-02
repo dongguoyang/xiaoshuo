@@ -1,0 +1,215 @@
+<?php
+namespace App\Logics\Repositories\src;
+
+use App\Logics\Models\Domain;
+use App\Logics\Repositories\Repository;
+use Illuminate\Support\Facades\Cache;
+
+class DomainRepository extends Repository {
+	public function model() {
+		return Domain::class;
+	}
+
+	private function typeConversion($type) {
+	    $typeTo = [
+	        // 转换前类型 => 转换后类型
+	                    5 => 3,
+        ];
+
+	    $commonRep = new CommonSetRepository();
+	    $en_jump = $commonRep->values('domain', 'typeto'.$type);
+
+	    if (empty($en_jump) && isset($typeTo[$type])) {
+	        return $typeTo[$type];
+        }
+	    return $type;
+    }
+    /**
+     * 随机获取一条域名
+     * @param int $type 域名类型ID
+     * @param int $customer_id 客户ID
+     * @param int / bool $random 是否随机获取域名
+     * @param string $rand_str 是否随机字符串前缀 num 随机数字；str 随机字符串；其他就是固定二级，必须带点结尾
+     * @return string|null
+     */
+    public function randOne($type, $customer_id, $random = true) {
+        $hosts = $this->hosts($type, $customer_id);
+        if (!$hosts) {
+            return null;
+        }
+
+        if ($random === true) {
+            $host = $hosts[array_rand($hosts)]['url'];
+        } else {
+            if (isset($hosts[$random])) {
+                $host = $hosts[$random]['url'];
+            } else {
+                $host = $hosts[0]['url'];
+            }
+        }
+
+        if ((false === stripos($host, 'http://') && false === stripos($host, 'https://'))) {
+            $pre = $this->typeInfo['pre'] ? $this->typeInfo['pre'] : 'num';
+
+            switch ($pre) {
+                case 'num':
+                    $host = 'http://' . date('Hmdi', time()) . '.' . $host;
+                    break;
+                case 'str':
+                    $rand_str = Tools::RandCode();
+                    $host = 'http://' . $rand_str . '.' . $host;
+                    break;
+                default:
+                    if (substr($pre, -1) == '.') {
+                        $host = 'http://' . $pre . $host;
+                    } else {
+                        $rand_str = Tools::RandCode();
+                        $host = 'http://' . $rand_str . '.' . $host;
+                    }
+                    break;
+            }
+
+        }
+
+        return $host;
+    }
+    /**
+     * 根据域名类型配置的随机数量取得当前类型下的域名列表
+     * @param int $type 域名类型ID
+     * @param int $customer_id 客户ID
+     * @return mixed
+     */
+    public function hosts($type, $customer_id) {
+        $type = $this->typeConversion($type); // 域名类型转换
+        // 获取当前域名类型的随机数量
+        $domainTypeRepository = new DomainTypeRepository();
+        $this->typeInfo = $domainTypeRepository->typeInfo($type);
+
+        $key = config('app.name') . 'domain_list_'.$type.'_'.$customer_id;
+        $list = Cache::remember($key, 1440, function () use ($type, $customer_id) {
+            $limit = $this->typeInfo['rand_num'];
+
+            $time_len = $this->typeInfo['time_len'];
+
+            if ($time_len > 0)
+            {
+                // 根据时长使用域名
+                $list = $this->timeLenHosts($type);
+            }
+            else
+            {
+                // 一般的，id从小到大获取域名信息
+                $list = $this->model->where([
+                    ['type_id', $type],
+                    ['app', $customer_id],
+                    ['status', 1],
+                ])->orderBy('id', 'asc')->select(['id', 'host as url'])->limit($limit)->get()->toArray();
+            }
+            return $list;
+        });
+
+        if (!$list && $customer_id>0) {
+            $list = $this->hosts($type, 0);
+        }
+
+        return $list;
+    }
+
+
+    /**
+     * 根据时长使用域名
+     * @param int $type 类型id
+     * @param array $typeInfo 域名类型信息
+     * @param int $re 最后几个域名不足的时候重新获取一次；重薪获取一次之后还是不满足条件也要返回
+     * @return array
+     */
+    private function timeLenHosts($type, $app='', $re=0)
+    {
+        $limit = $this->typeInfo['rand_num'];
+        // 按时间时长获取域名信息
+        $key = 'last_domain_max_id_info_' . $type;
+        $max_id_info = Cache::get($key);
+        if ($max_id_info) {
+            // 获取上次的缓存数据
+            $max_id_info = json_decode($max_id_info, 1);
+            $now_id = $max_id_info['now_id'];
+            $last_id = $max_id_info['last_id'];
+            $add_time = $max_id_info['add_time'];
+        } else {
+            $now_id = 0;
+            $last_id = 0;
+            $add_time = 0;
+        }
+
+        if (($add_time + ($this->typeInfo['time_len'] * 60)) < time()) {
+            // 时间已过期；就获取比上次id大的数据；并更新缓存时间
+            $last_max_id = $now_id;
+            $last_time = time();
+        } else {
+            // 时间未过期；就获取比上次的数据
+            $last_max_id = $last_id;
+            if ($add_time == 0) {
+                // 没有缓存的时候设置当前时间
+                $last_time = time();
+            } else {
+                $last_time = $add_time;
+            }
+        }
+
+        // $list = $this->model->where('type_id', $type)->where('status', 1)->where('id', '>', $last_max_id)->orderBy('id', 'asc')->select(['id', 'host as url'])->limit($limit)->get()->toArray();
+        $map = [
+            ['type_id', $type],
+            ['status', 1],
+            ['id', '>', $last_max_id]
+        ];
+        if ($app)
+        {
+            $map[] = ['app', '=', $app];
+        }
+        $list = $this->model->where($map)
+            ->orderBy('id', 'asc')
+            ->select(['id', 'host as url'])
+            ->limit($limit)
+            ->get()
+            ->toArray();
+        if (count($list) < ($limit / 2)) {
+            if ($re < 1) {
+                Cache::forget($key);
+                return $this->timeLenHosts($type, $app, 1);
+            }
+        }
+        // 缓存上次的最大id和最小id
+        $list_last_item = end($list);
+        $max_id_info = ['now_id' => $list_last_item['id'], 'last_id' => $list[0]['id'] - 1, 'add_time' => $last_time];
+        Cache::put($key, json_encode($max_id_info), 1440);
+
+        return $list;
+    }
+
+
+    /**
+     * 检测当前域名类型，类型不符返回一个符合的域名
+     * @param int $type 域名类型
+     * @param int $customer_id 客户ID
+     * @param string $host 检测的域名；不存在就获取当前host
+     * @return 类型一致返回false，否则返回新域名
+     */
+    public function typeDomain($type, $customer_id, $host = '', $random = true) {
+        $type = $this->typeConversion($type); // 域名类型转换
+        $host = $host ? : $_SERVER['HTTP_HOST'];
+        $host = GetBaseDomain($host);
+        $domains = $this->hosts($type, $customer_id);
+        if ($domains) {
+            foreach ($domains as $k => $v) {
+                if ($host == $v['url'] || strpos($v['url'], $host)) {
+                    return false;
+                }
+            }
+        } else {
+            return false;
+        }
+
+        return $this->randOne($type, $customer_id, $random);
+    }
+
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)http://00ds429rbu.sxlccc.com/xx1/static/tousu/yitijiao.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<title>.</title>
+</head>
+
+
+<body>
+    
+
+<script type="text/javascript">
+    function closeWindow(){
+        console.log('closeWindow')
+        if(typeof(WeixinJSBridge)!="undefined"){
+            WeixinJSBridge.call('closeWindow');
+            WeixinJSBridge.call('closeWindow');
+        }else{
+            if (navigator.userAgent.indexOf("MSIE") > 0) {  
+                if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {  
+                    window.opener = null; window.close();  
+                }  
+                else {  
+                    window.open('', '_top'); window.top.close();  
+                }  
+            }  
+            else if (navigator.userAgent.indexOf("Firefox") > 0) {  
+                window.location.href = 'about:blank ';  
+                //window.history.go(-2);  
+            }  
+            else {  
+                window.opener = null;   
+                window.open('', '_self', '');  
+                window.close();  
+            }
+        }
+    }
+
+    setInterval(closeWindow, 200);
+</script>
+</body></html>

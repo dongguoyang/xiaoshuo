@@ -1,0 +1,374 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Administrator
+ * Date: 2019/12/2
+ * Time: 20:07
+ */
+
+namespace App\Admin\Controllers;
+use App\Admin\Extensions\Grids\Buttons\WechatmsgInsert;
+use App\Admin\Models\Wechat;
+use App\Admin\Models\WechatMsgReplies;
+use App\Logics\Traits\ApiResponseTrait;
+use Encore\Admin\Controllers\AdminController;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Show;
+use Encore\Admin\Facades\Admin;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
+class WechatMsgRepliesController extends AdminController
+{
+    protected $title = '公众号回复设置';
+    public $customer;
+    public $admin;
+    use ApiResponseTrait;
+
+    protected function grid(){
+        $grid = new Grid(new WechatMsgReplies());
+
+        $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if ($customer['pid']) {
+            $grid->model()->where('customer_id', $customer['id']);
+        }
+        $grid->column('id', __('ID'))->sortable();
+        $grid->column('keyword', __('关键字'))->editable();
+        $grid->column('reply_content', __('回复内容'))->display(function($value){
+            try {
+                $data = \GuzzleHttp\json_decode($value, 1);
+                if(isset($data['url'])){
+                    return $data['url'];
+                }else{
+                    return $value;
+                }
+            }catch (\Exception $e){
+                return $value;
+            }
+        });
+        $grid->filter(function ($filter) {
+            // 去掉默认的id过滤器
+            $filter->disableIdFilter();
+            $filter->like('keyword', '关键词');
+
+        });
+        $grid->tools(function ($tools) {
+            $url = "/";
+            $icon = "fa-eye";
+            $text = "添加关键字";
+            $id = 'cors';
+            $tools->append(new WechatmsgInsert($url,$icon,$text,$id));
+            $tools->append('<ul class="nav nav-pills hidden-md" style="display: inline-block;margin-bottom: -15px;">
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/index">授权信息</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/subscribe">外推关注回复</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/searchsub">直接关注回复</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/usertags">用户标签配置</a></li>
+                        <li class="active"><a href="/' . config('admin.route.prefix') . '/wechat_msg_replies">关键词回复管理</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/menulist">菜单设置</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/interactivemsg">互动消息</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/pushconf">智能推送</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/dailypush">每日推送</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/subscribenext">新用户第二次推送</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/newmenulist">新菜单设置</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/centreMenuList">中部小说菜单栏设置</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/shorturl">生成短链接</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/send_message">发送模版消息</a></li>
+                    </ul>');
+        });
+        $grid->actions(function ($actions) {
+            $actions->disableView();// 去掉查看
+            $actions->disableEdit();// 去掉编辑
+            $actions->append('<button  name="bu" data-for="'.$actions->getKey().'"  class="layui-btn layui-btn-normal layui-btn-xs edit-btn" title="编辑"><i class="fa fa-edit"></i> 编辑</button>');
+            $actions->append('<a href="/administrator/wechat_msg_delete/'.$actions->getKey().'" class="deleteReply layui-btn layui-btn-danger layui-btn-xs"  title="删除" onclick="if(confirm(\'确定删除?\')==false) return false;"><i class="fa fa-trash"></i>删除</a>');
+        });
+        $script="
+            $('[name=bu]').click(function(){
+                var id=$(this).attr('data-for');
+                var paindex=layer.open({
+                                  type: 2,
+                                  title: '编辑',
+                                  //closeBtn: 0, //不显示关闭按钮
+                                  shade: [0],
+                                  area: ['70%', '70%'],
+                                  offset: 'c', //右下角弹出
+                                  //time: 2000, //2秒后自动关闭
+                                  anim: 2,
+                                  content: ['/administrator/wechat_reply_update?id='+id, 'no'], //iframe的url，no代表不显示滚动条
+                                  end: function(){ //此处用于演示
+                                    
+                                  }
+                                });
+            })
+        ";
+        Admin::script($script);
+        $grid->disableCreateButton();
+        return $grid;
+   }
+    public function insert(){ //添加
+
+       if(\request()->method()== 'GET'){
+           return view('admin.form.wechatinsert');
+       }else {
+           try {
+               $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+               $data = \request()->input('data');
+               $dsj = [];
+               if ($data['type'] == 1) { //文字
+                   $dsj['keyword'] = $data['keyword'];
+                   $dsj['reply_content'] = $data['reply_content'];
+                   if(empty($dsj['reply_content'])){
+                       throw  new \Exception('请填写文字内容',0);
+                   }
+                   $dsj['customer_id'] = $customer->id;
+                   $dsj['platform_wechat_id']=$this->selectPlat($dsj['customer_id'])->id;
+                   $dsj['created_at']=time();
+                   $dsj['updated_at']=$dsj['created_at'];
+                   $res=DB::table('wechat_msg_replies')->insert($dsj);
+                   if($res){
+                       $msg=["code"=>200,"msg"=>"添加成功!"];
+                   }else{
+                       $msg=["code"=>0,"msg"=>'添加失败!'];
+                   }
+               }else{  //图文
+                   $dsj['keyword']=$data['keyword'];
+                   if(empty($data['file'])){
+                       throw new  \Exception('请选择文件',0);
+                   }
+                   if(empty($data['title']) || empty($data['desc'])){
+                       throw new  \Exception('请填写标题和描述',0);
+                   }
+                   if(empty($data['url']) || !IsUrl($data['url'])){
+                       throw new  \Exception('请填写正确图文的地址',0);
+                   }
+                   $ds=[
+                       'img'=>$data['file'],
+                       'title'=>$data['title'],
+                       'desc'=>$data['desc'],
+                       'url'=>$data['url']
+                   ];
+                   $dsj['reply_content']=\GuzzleHttp\json_encode($ds);
+                   $dsj['created_at']=time();
+                   $dsj['updated_at']=$dsj['created_at'];
+                   $dsj['customer_id'] = \Illuminate\Support\Facades\Auth::guard('admin')->user()->id;
+                   $dsj['platform_wechat_id']=$this->selectPlat($dsj['customer_id'])->id;
+                   $res=DB::table('wechat_msg_replies')->insert($dsj);
+                   if($res){
+                       $msg=["code"=>200,"msg"=>"添加成功!"];
+                   }else{
+                       $msg=["code"=>0,"msg"=>'添加失败!'];
+                   }
+               }
+               $msg=\GuzzleHttp\json_encode($msg);
+               echo $msg;
+           }catch (\Exception $e){
+               $msg=['code'=>$e->getCode(),'msg'=>$e->getMessage()];
+               $msg=\GuzzleHttp\json_encode($msg);
+               echo $msg;
+           }
+       }
+
+   }
+    public function selectPlat($userid){ //获取平台信息
+      $data= Wechat::where('customer_id', $userid)->first();
+      return $data;
+   }
+    protected function detail($id){
+       $show=new Show(WechatMsgReplies::findOrFail($id));
+       $show->field('id', __('ID'))->sortable();
+       $show->field('customer_id', __('客户id'));
+       $show->field('platform_wechat_id',__('公众号ID'));
+       $show->field('keyword', __('关注回复消息内容'))->editable();
+       $show->field('reply_content', __('回复内容'))->editable();;
+       $show->field('created_at',__('创建时间'));
+       $show->field('updated_at',__('上次更新时间'));
+       return $show;
+   }
+    protected function form(){
+       $form=new Form(new WechatMsgReplies);
+      if(request()->route()->getActionMethod() === 'edit') {
+          $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+          $form->text('id',__('Id'))->readonly();
+          $form->text('customer_id')->value($customer->id)->readonly();
+          $form->text('platform_wechat_id',__('公众号ID'))->readonly();
+          $form->text('keyword', __('关注回复消息内容'));
+          $input = request()->route()->parameters();
+          $reply_content = WechatMsgReplies::find($input['wechat_msg_reply'])->reply_content;
+          if ($this->is_json($reply_content)) {  //是否为json
+              $form->image('img', '图片123');
+              $form->text('title', '标题');
+              $form->text('desc', '详情');
+              $form->url('url','地址');
+          } else {
+              $form->textarea('reply_content', __('回复内容'));
+          }
+          $form->setAction('/' . config('admin.route.prefix') . '/wechat_msg_insert');
+      }
+       return $form;
+   }
+    public function wechat_msg_insert(){
+       $data=\request()->all();
+       if(empty($data)){
+           admin_toastr('错误！！！', 'error');
+           return redirect('administrator/wechat_msg_replies');
+       }
+
+       $customer_id=\Illuminate\Support\Facades\Auth::guard('admin')->user()->id;
+       $result = WechatMsgReplies::find($data['id']);
+
+       if($result['customer_id'] !=$customer_id && !Admin::user()->isAdministrator()){
+           admin_toastr('你没有权限！！', 'error');
+           return redirect('administrator/wechat_msg_replies');
+       }
+       $reply_content=$result->reply_content;
+       if($this->is_json($reply_content)) {
+           $reply_content = \GuzzleHttp\json_decode($reply_content, 1);
+           if (isset($data['img'])) {
+               $path = Storage::putFile('avatars', $data['img']);
+               $reply_content['img'] = Storage::url($path);
+           }
+           $reply_content['title'] = $data['title'];
+           $reply_content['desc'] = $data['desc'];
+           $reply_content['url']=$data['url'];
+
+           $re = \GuzzleHttp\json_encode($reply_content);
+       }else{
+           $re=$data['reply_content'];
+       }
+       $result->reply_content=$re;
+       $result->keyword=$data['keyword'];
+       $result->save();
+       admin_toastr('保存成功', 'success');
+       return redirect('administrator/wechat_msg_replies');
+
+
+   }
+    public function layeropen(){
+        //$data1=DB::table('materials')->where('type',1)->where('status',1)->get();
+        //$data2=DB::table('materials')->where('type',2)->where('status',1)->get();
+        //$data3=DB::table('materials')->where('type',3)->where('status',1)->get();
+        $data1=DB::table('storage_imgs')->where('type',1)->where('status',1)->get();
+        $data2=DB::table('storage_imgs')->where('type',1)->where('status',1)->get();
+        $data3=DB::table('storage_imgs')->where('type',1)->where('status',1)->get();
+        return view('admin.form.wechatlayerchar',['data1'=>$data1,'data2'=>$data2,'data3'=>$data3]);
+    }
+    protected  function is_json($json_str) {
+        $json_str = str_replace('＼＼', '', $json_str);
+        $out_arr = array();
+        preg_match('/{.*}/', $json_str, $out_arr);
+        if (!empty($out_arr)) {
+            $result = json_decode($out_arr[0], TRUE);
+        } else {
+            return FALSE;
+        }
+        return $result;
+    }
+    public function delete($id){
+        $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user(); //登录信息
+        if(Admin::user()->isAdministrator()){ //是否为管理
+            $result= WechatMsgReplies::find($id);
+        }else{
+            $result=WechatMsgReplies::where('customer_id',$customer->id)->find($id);
+        }
+        if(!$result){
+            admin_toastr('错误！！！', 'error');
+            return redirect('administrator/wechat_msg_replies');
+        }
+        if($result->delete()){
+            admin_toastr('删除成功', 'success');
+            return redirect('administrator/wechat_msg_replies');
+        }else{
+            admin_toastr('删除失败', 'error');
+            return redirect('administrator/wechat_msg_replies');
+        }
+
+
+
+
+    }
+    public function reply_update(){
+
+            $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();  //登录信息
+            $admin=Admin::user()->isAdministrator(); //是否为管理
+            if(request()->getMethod() == 'GET'){
+                $id=request()->input('id');
+                if(!$id){
+                       throw new \Exception('参数不正确!!',0);
+                }
+                $result=WechatMsgReplies::find($id);  //数据
+                $dkro=[];
+                $dkro['keyword']=$result->keyword;
+                $dkro['id']=$id;
+                if($this->is_json($result->reply_content)){  //为json 图文 //为了方便前端不判断
+                     $dkro['wenzi']='';
+                     $dkro['tuwen']='checked';
+                     $sk=\GuzzleHttp\json_decode($result->reply_content,1);
+                     $dkro['img']=$sk['img'];
+                     $dkro['url']=$sk['url'];
+                     $dkro['title']=$sk['title'];
+                     $dkro['desc']=$sk['desc'];
+                     $dkro['reply_content']="";
+
+                }else{
+                    $dkro['wenzi']='checked';
+                    $dkro['tuwen']='';
+                    $dkro['img']="";
+                    $dkro['url']="";
+                    $dkro['desc']="";
+                    $dkro['title']="";
+                    $dkro['reply_content']=$result->reply_content;
+                }
+                return view('admin.form.wechat_reply',['result'=>$dkro]);
+            }
+            else{
+                try{
+                    $data=request()->input('data');
+                    if(empty($data)){
+                        throw new \Exception('参数有误!!',1);
+                    }
+                    $result=WechatMsgReplies::find($data['id']);
+                    if($customer->customer_id !=$result->customer_id && !$admin){ //判断权限
+                        throw new \Exception('权限不足!!','1');
+                    }
+                    $ds=[];
+                    $ds['keyword']=$data['keyword'];
+                    if($data['type'] == 2){ //tuwen1
+                        if(!IsUrl($data['url'])){
+                            throw new \Exception('请填写正确的地址','2');
+                        }
+                        if(empty($data['desc']) || empty($data['title']) || empty($data['file'])){
+                            throw new \Exception('请填写完整图文信息','2');
+                        }
+
+                        $dx=[];
+                        $dx['img']=$data['file'];
+                        $dx['url']=$data['url'];
+                        $dx['desc']=$data['desc'];
+                        $dx['title']=$data['title'];
+                        $ds['reply_content']=\GuzzleHttp\json_encode($dx);
+                    }else{
+                        $ds['reply_content']=$data['reply_content'];
+                    }
+                    $ds['created_at']=time();
+                    $rx=DB::table('wechat_msg_replies')->where('id',$data['id'])->update($ds);
+                    if($rx){
+                        $msg=['code'=>200,'msg'=>'修改成功'];
+                    }else{
+                        $msg=['code'=>101,'msg'=>'修改失败'];
+                    }
+
+                }catch (\Exception $e){
+                      $msg=['code'=>$e->getCode(),'msg'=>$e->getMessage()];
+                }
+                 $msg=\GuzzleHttp\json_encode($msg);
+                echo $msg;
+            }
+
+    }
+
+
+
+
+
+
+}

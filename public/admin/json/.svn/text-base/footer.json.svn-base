@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "preview_img": "/home/extendpage/footer1.gif",
+    "weight": 13,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer1.gif\"/>"
+  },
+  {
+    "id": 8,
+    "preview_img": "/home/extendpage/footer8.gif",
+    "weight": 12,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer8.gif\"/>"
+  },
+  {
+    "id": 2,
+    "preview_img": "/home/extendpage/footer2.gif",
+    "weight": 12,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer2.gif\"/>"
+  },
+  {
+    "id": 3,
+    "preview_img": "/home/extendpage/footer3.gif",
+    "weight": 11,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer3.gif\"/>"
+  },
+  {
+    "id": 7,
+    "preview_img": "/home/extendpage/footer7.gif",
+    "weight": 10,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer7.gif\"/>"
+  },
+  {
+    "id": 6,
+    "preview_img": "/home/extendpage/footer6.gif",
+    "weight": 5,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer6.gif\"/>"
+  },
+  {
+    "id": 5,
+    "preview_img": "/home/extendpage/footer5.gif",
+    "weight": 4,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer5.gif\"/>"
+  },
+  {
+    "id": 4,
+    "preview_img": "/home/extendpage/footer4.gif",
+    "weight": 3,
+    "template": "<img style=\"max-width:100%\" src=\"/home/extendpage/footer4.gif\"/>"
+  }
+]

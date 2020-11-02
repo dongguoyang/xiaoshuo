@@ -1,0 +1,24 @@
+
+ECS:
+ssh root@47.56.232.188 端口 23459
+ssh 密码：JK&vKAW39^Y@L3
+
+Redis:
+内网连接地址：r-j6cenx9d3iusb0ubjd.redis.rds.aliyuncs.com
+端口：6379
+密码：jfADjje80943f==csd87321
+
+RDS:
+内网连接地址：rm-j6c823707m0u191n3.mysql.rds.aliyuncs.com
+外网连接地址：rm-j6c823707m0u191n36o.mysql.rds.aliyuncs.com
+数据库名称：xiaoshuo
+数据库账号(高权限)：xiaoshuohk01
+数据库密码(高权限)：K67h&^2kl277wSs
+数据库账号(普通)：xiaoshuo
+数据库密码(普通)：JKui&(Y@K3KWY
+
+阿里云信息：
+账号：weiju3402
+密码：560411511x
+AccessKeyID： LTAIr3DL88fj4vuT
+AccessKeySecret： Si8o42xU9bL5Smhhu5KYzGj2pb0tPZ

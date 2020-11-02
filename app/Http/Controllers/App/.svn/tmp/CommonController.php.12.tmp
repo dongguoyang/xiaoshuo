@@ -1,0 +1,151 @@
+<?php
+namespace App\Http\Controllers\App;
+/**
+ * 公共的信息获取
+ */
+use App\Http\Controllers\BaseController;
+use App\Jobs\InteractMsg;
+use App\Jobs\OrderNoPay;
+use App\Logics\Models\Novel;
+use App\Logics\Models\NovelSection;
+use App\Logics\Models\PlatformWechat;
+use App\Logics\Repositories\src\MaterialRepository;
+use App\Logics\Repositories\src\RechargeLogRepository;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Services\src\CommonService;
+use App\Logics\Traits\PushmsgTrait;
+use App\Logics\Traits\WechatTrait;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class CommonController extends BaseController
+{
+    use WechatTrait, PushmsgTrait;
+    public function __construct(CommonService $service)
+    {
+        parent::__construct();
+        $this->service = $service;
+    }
+    /**
+     * 测试方法
+     */
+    public function Test()
+    {
+<<<<<<< .mine
+        $user = \App\Logics\Models\User::find(24);
+        $this->RechargeMsg($user);dd('783921987');
+        $ma['FromUserName'] = 'oZxkd1bgyw99Kq0NwTnDiRCFNAIE';
+        dd($this->signReply($ma));
+=======
+>>>>>>> .r796
+        /*$rel = scandir('D:\www\php\laravel\novel_sys\public\img\wechat\letter');
+        $dir = 'img/wechat/act/';
+        $mat = new MaterialRepository();
+        foreach ($rel as $v) {
+            if (in_array($v, ['', '.', '..'])) continue;
+            $mat->create(['type'=>3, 'img'=>$dir.$v]);
+        }
+        dd($rel);*/
+        try
+        {
+            $userRep = new UserRepository();
+            $plat_wechat = PlatformWechat::first();
+            $intermsg = \App\Logics\Models\InteractMsg::first();
+            $users = $userRep->NoteInteractInfo($plat_wechat, 'oZxkd1bgyw99Kq0NwTnDiRCFNAIE');
+            dump($users, '---------------');
+            $users = $userRep->NoteInteractInfo($plat_wechat);
+            /*if (!$users) {
+                $users[3] = ['oZxkd1bgyw99Kq0NwTnDiRCFNAIE', time()+86400];
+            }*/
+            InteractMsg::dispatch($plat_wechat, $intermsg); // 立即执行任务
+            // 过1分钟执行任务
+            InteractMsg::dispatch($plat_wechat, $intermsg)->delay(Carbon::createFromTimestamp(time()+60));
+            dump(now());
+            dump($users);
+            dump($intermsg);
+
+            $user = $userRep->find(3);
+            $rechargeLogReg = new RechargeLogRepository();
+            $info = $rechargeLogReg->model->where('user_id', $user['id'])->orderBy('id', 'desc')->first();
+            OrderNoPay::dispatch($info, $user);
+            OrderNoPay::dispatch($info, $user)->delay(now()->addMinutes(1));
+            // 可是我这边测试的时候；这3个消息是几乎同时发送到我手机的
+            // return $this->service->Test();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+    /**
+     * 获取公共配置
+     */
+    public function CommonSets()
+    {
+        try
+        {
+            return $this->service->CommonSets();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+    /**
+     * 获取公共长文本配置
+     */
+    public function CommonTexts()
+    {
+        try
+        {
+            return $this->service->CommonTexts();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+    /**
+     * 获取带参数的二维码
+     */
+    public function ProductQRCode()
+    {
+        try
+        {
+            return $this->service->ProductQRCode();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+    /**
+     * 获取公众号信息
+     */
+    public function WechatInfo()
+    {
+        try
+        {
+            return $this->service->WechatInfo();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+    /**
+     * 页面跳转
+     */
+    public function JumpTo()
+    {
+        try
+        {
+            return $this->service->JumpTo();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+}

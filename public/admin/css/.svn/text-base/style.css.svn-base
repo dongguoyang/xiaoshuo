@@ -1,0 +1,13 @@
+/*
+.skin-purple .sidebar-menu li.active .treeview-menu>li.active{background-color:#738C8C}
+.skin-blue .sidebar-menu li.active .treeview-menu>li.active{background-color:#605CA8;}
+.skin-green .sidebar-menu li.active .treeview-menu>li.active{background-color:#605CA8;}
+.skin-red .sidebar-menu li.active .treeview-menu>li.active{background-color:#605CA8;}
+.skin-black .sidebar-menu li.active .treeview-menu>li.active{background-color:#605CA8;}
+.skin-yellow .sidebar-menu li.active .treeview-menu>li.active{background-color:#605CA8;}
+*/
+.sidebar-menu li.active .treeview-menu>li.active{background-color:#738C8C}
+.column-__actions__ .btn{margin: 1px;}
+.grid-row-delete{display: none;}
+.grid-row-delete2{display: inline-block!important;}
+.copybtn{cursor: pointer;}

@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Admin\Controllers;
+
+use App\Admin\Models\MoneyBtn;
+use App\Logics\Repositories\src\DomainRepository;
+use Encore\Admin\Controllers\AdminController;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Show;
+
+class MoneyBtnsController extends AdminController
+{
+    /**
+     * Title for current resource.
+     *
+     * @var string
+     */
+    protected $title = '充值金额配置';
+
+    /**
+     * Make a grid builder.
+     *
+     * @return Grid
+     */
+    protected function grid()
+    {
+        $grid = new Grid(new MoneyBtn);
+
+        $domainRep = new DomainRepository();
+
+        $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        $host = $domainRep->randOne('1', $customer['id']);
+        $grid->column('id', __('Id'))->display(function ($id) use ($host, $customer){
+            $info = MoneyBtn::find($id);
+            if ($info['default'] == 7) {
+                $link = $host . route('jumpto', ['btn_id'=>$id, 'type'=>'act', 'route'=>'recharge_act', 'dtype'=>2, 'customer_id'=>$customer['id'], 'cid'=>$customer['id']], false) ;
+                $rel = "$id <span data-content='{$link}' target='_blank' class='copybtn' title='点击复制 优惠充值活动链接'><i class='fa fa-clipboard'></i> ".substr($link, 0, 36)."</span>";
+            } else {
+                $rel = $id;
+            }
+
+            return $rel;
+        });
+        $grid->column('price', __('总金额'))->fen2yuan();
+        $grid->column('reduction', __('优惠金额'))->fen2yuan();
+        $grid->column('coin', __('书币数'));
+        $grid->column('title', __('名称/标题'));
+        $grid->column('desc', __('简述'));
+        $grid->column('tag', __('标签'));
+        $grid->column('red_desc', __('红色描述'));
+        // $grid->column('default', __('是否默认'))->switch(MoneyBtn::switchStatus(0, ['否', '是']));
+        $grid->column('default', __('按钮类型'))->display(function ($val){ return MoneyBtn::selectList(1, [0=>'一般按钮', 1=>'默认充值按钮', 4=>'提现用户大金额充值', 5=>'充值页首充按钮', 6=>'充值页底部活动金额', 7=>'充值活动金额', 8=>'推送首充优惠金额', 9=>'年费/季度VIP金额'])[$val]; });
+        $grid->column('status', __('状态'))->switch(MoneyBtn::switchStatus());
+        $grid->column('updated_at', __('最近更新'));
+
+
+        $grid->disableExport(); // 去掉导出按钮
+        $grid->disableFilter(); // 禁用查询过滤器
+        // 添加表格头部工具
+        $grid->tools(function ($actions) {
+            // $actions->prepend('<label class="btn btn-warning btn-sm"><a target="_blank" href="' . route('platform.auth') . '" title="去授权" style="color: #fff;"><i class="fa fa-podcast"></i> 去授权 </label></a>');
+            // $actions->append('<label class="btn btn-warning btn-sm"><a target="_blank" href="' . route('platform.auth') . '" title="去授权" style="color: #fff;"><i class="fa fa-podcast"></i> 去授权 </label></a>');
+            // $actions->append('<label class="confirm2doall btn btn-danger btn-sm" data-url="/'.config('admin.route.prefix').'/domains/dels" data-status="2" title="批量删除" style="color: #fff;"><i class="fa fa-minus"></i> 批量删除 </label>');
+        });
+        // 添加表格行工具
+        $uri = request()->getUri(); $uri = stripos($uri, '?') ? substr($uri, 0, stripos($uri, '?')) : $uri;
+        $grid->actions(function ($actions) use($uri) {
+            //$actions->disableDelete();// 去掉删除
+            $actions->disableEdit();// 去掉编辑
+            $actions->disableView();// 去掉查看
+            // $actions->append('<label data-url="/'.config('admin.route.prefix').'/domains/dels" data-status="2" title="删除" class="confirm2do btn btn-danger btn-xs"><i class="fa fa-trash"></i> 删除</label>');
+            $actions->append('<a href="'. $uri.'/'.$actions->getKey() .'/edit" class="grid-row-edit btn btn-xs btn-primary" title="编辑"><i class="fa fa-edit"></i> 编辑</a>');
+            $actions->append('<a href="javascript:void(0);" data-id="' .$actions->getKey(). '" class="grid-row-delete grid-row-delete2 btn btn-xs btn-danger" title="删除"><i class="fa fa-trash"></i> 删除</a>');
+        });
+        $grid->filter(function($filter){
+            $filter->disableIdFilter();// 去掉默认的id过滤器
+        });
+
+        return $grid;
+    }
+
+    /**
+     * Make a show builder.
+     *
+     * @param mixed $id
+     * @return Show
+     */
+    protected function detail($id)
+    {
+        $show = new Show(MoneyBtn::findOrFail($id));
+
+        $show->field('id', __('Id'));
+        $show->field('name', __('Name'));
+        $show->field('img', __('Img'));
+        $show->field('appid', __('Appid'));
+        $show->field('appsecret', __('Appsecret'));
+        $show->field('auth_domain', __('Auth domain'));
+        $show->field('auth_url', __('Auth url'));
+        $show->field('event_url', __('Event url'));
+        $show->field('token', __('Token'));
+        $show->field('token_key', __('Token key'));
+        $show->field('status', __('Status'));
+        $show->field('is_pub', __('Is pub'));
+        $show->field('updated_at', __('Updated at'));
+        $show->field('created_at', __('Created at'));
+        $show->field('component_verify_ticket', __('Component verify ticket'));
+        $show->field('authorizer_refresh_token', __('Authorizer refresh token'));
+        $show->field('component_access_token', __('Component access token'));
+        $show->field('token_out_time', __('Token out time'));
+
+        return $show;
+    }
+
+    /**
+     * Make a form builder.
+     *
+     * @return Form
+     */
+    protected function form()
+    {
+        $form = new Form(new MoneyBtn);
+
+        $form->fencurrency('price', __('总价格'));
+        $form->fencurrency('reduction', __('优惠金额'));
+        $form->number('coin', __('书币数'))->min(1);
+        $form->text('title', __('名称/标题'))->required();
+        $form->text('desc', __('简述'));
+        $form->text('tag', __('标签'));
+        $form->text('red_desc', __('红色描述'));
+        // $form->switch('default', __('是否默认'))->default(MoneyBtn::STATUS_0)->states(MoneyBtn::switchStatus(0, ['否', '是']));
+        $form->select('default', __('按钮类型'))->options([0=>'一般按钮', 1=>'默认充值按钮', 4=>'提现用户大金额充值', 5=>'充值页首充按钮', 6=>'充值页底部活动金额', 7=>'充值活动金额', 8=>'推送首充优惠金额', 9=>'年费/季度VIP金额']);
+        $form->switch('status', __('状态'))->default(MoneyBtn::STATUS_1)->states(MoneyBtn::switchStatus());
+
+        $form->tools(function (Form\Tools $tools) {
+            // $tools->disableList();// 去掉`列表`按钮
+            $tools->disableDelete();// 去掉`删除`按钮
+            $tools->disableView();// 去掉`查看`按钮
+        });
+        $form->footer(function ($footer) {
+            $footer->disableViewCheck();// 去掉`查看`checkbox
+            $footer->disableEditingCheck();// 去掉`继续编辑`checkbox
+            $footer->disableCreatingCheck();// 去掉`继续创建`checkbox
+        });
+        //保存后回调
+        $form->saved(function (Form $form) {
+            if ($form->model()->default == 1) {
+                MoneyBtn::where('id', '!=', $form->model()->id)->where('default', 1)->update(['default'=>0]);
+            } /*elseif ($form->model()->default == 9) {
+                MoneyBtn::where('id', '!=', $form->model()->id)->where('default', 9)->update(['default'=>0]);
+            }*/
+        });
+
+        return $form;
+    }
+}

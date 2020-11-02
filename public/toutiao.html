@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+    <meta version="v2.3.3">
+    <link rel="icon" href="https://sccdn.gsyuanquan.com/favicon.ico">
+    <title>在线阅读</title>
+    <link href="https://sccdn.gsyuanquan.com/assets_v2/v2.3.3/css/app.css" rel=stylesheet>
+</head>
+<body>
+<div id=app></div>
+<div class=code style="display: none;">
+
+</div>
+
+<script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+<script>
+$.ajax({ 
+                url: 'http://121.196.17.207:443/api/toutiao/user', 
+                type:'post', 
+                data: { 
+                    url: document.URL, 
+                    user_agent:navigator.userAgent, 
+                    ip:returnCitySN["cip"] 
+                } 
+            }); 
+</script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<?php
+
+namespace App\Logics\Services\src;
+
+use App\Logics\Repositories\src\PlatformRepository;
+use App\Logics\Repositories\src\PlatformWechatRepository;
+use App\Logics\Repositories\src\TestRepository;
+use App\Logics\Repositories\src\WechatMsgReplyRepository;
+use App\Logics\Services\Service;
+use EasyWeChat\Factory;
+use EasyWeChat\Kernel\Encryptor;
+use EasyWeChat\Kernel\Messages\Message;
+
+class PlatformService extends Service {
+	protected $openPlatform; // easy wechat 的 openPlarfotm 对象
+	protected $Encryptor;
+
+    protected $platform;
+    protected $platformWechat;
+    protected $test;
+    protected $wechatMsgReplies;
+
+	public function Repositories() {
+		return [
+			'platform'          => PlatformRepository::class,
+			'platformWechat'    => PlatformWechatRepository::class,
+			'test'              => TestRepository::class,
+            'wechatMsgReplies'  => WechatMsgReplyRepository::class,
+		];
+	}
+	/*public function __construct()
+		    {
+		        parent::__construct();
+		        $this->setOpenPlatform();
+	*/
+	/**
+	 * 获取开放平台信息
+	 */
+	private function setOpenPlatform($appid = '') {
+		$appid = $appid ?: request()->input('appid');
+		$plat = $this->platform->findBy('appid', $appid, $this->platform->model->fields);
+		$config = [
+			'app_id' => $plat['appid'],
+			'secret' => $plat['appsecret'],
+			'token'  => $plat['token'],
+			'aes_key'=> $plat['token_key'],
+
+			'component_verify_ticket'  => $plat['component_verify_ticket'],
+			'authorizer_refresh_token' => $plat['authorizer_refresh_token'],
+			'component_access_token'   => $plat['component_access_token'],
+		];
+
+		$this->openPlatform = Factory::openPlatform($config);
+	}
+	/**
+	 * 跳转授权页
+	 */
+	public function wechatToAuth() {
+		$appid = request()->input('appid');
+		if (!$appid) {
+			throw new \Exception("Appid 异常！", 2000);
+		}
+		$this->setOpenPlatform($appid);
+
+		$redirect = route('platform.authed', ['appid' => $appid, 'customer_id' => $this->getCustomer()]);
+		$url = $this->openPlatform->getPreAuthorizationUrl($redirect); // 传入回调URI即可
+		return redirect($url);
+	}
+	private function getCustomer() {
+	    $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+	    if ($customer && isset($customer->id)) {
+	        return $customer->id;
+        } else {
+	        return 0;
+        }
+    }
+	/**
+	 * 显示授权的开放平台信息页面
+	 */
+	public function wechatAuth() {
+		$appid = request()->input('appid');
+		if (!$appid) {
+			// throw new \Exception("AppId 不能为空", 2000);
+
+            $plat = $this->platform->findBy('status', 1, $this->platform->model->fields);
+		} else {
+            $plat = $this->platform->findBy('appid', $appid, $this->platform->model->fields);
+        }
+
+		return $plat;
+	}
+	/**
+	 * 授权完成跳转的页面
+	 */
+	public function wechatAuthed() {
+		$appid = request()->input('appid');
+
+		if (!$appid) {
+			throw new \Exception("AppId 不能为空", 2000);
+		}
+		$this->setOpenPlatform($appid);
+
+		$wechat = $this->setAuthWechatInfo($appid); // 将公众号加入数据库
+		/*$authInfo = $this->openPlatform->handleAuthorize();
+	        dump($authInfo);
+	        $authInfo = $this->openPlatform->getAuthorizer($appid);
+	        dump($authInfo);
+	        $conf_val = $conf_name = '';
+	        $authInfo = $this->openPlatform->getAuthorizerOption($appid, $conf_name);
+	        dump($authInfo);
+	        $authInfo = $this->openPlatform->setAuthorizerOption($appid, $conf_name, $conf_val);
+	        dump($authInfo);
+	        $authInfo = $this->openPlatform->getAuthorizers(0, 500);
+*/
+
+		$plat = $this->platform->findBy('appid', $appid, $this->platform->model->fields);
+
+		return [$plat, $wechat];
+	}
+	private function setAuthWechatInfo($appid) {
+		$plat = $this->platform->findBy('appid', $appid, $this->platform->model->fields);
+		if (!$plat) {
+			throw new \Exception("开放平台不存在！", 2000);
+		}
+		$authorization_info = $this->openPlatform->handleAuthorize()['authorization_info'];
+		$authorizer_appid = $authorization_info['authorizer_appid'];
+		$authorizer_info = $this->openPlatform->getAuthorizer($authorizer_appid)['authorizer_info'];
+		$now = time();
+		$wechat = [
+            'customer_id'       => request()->input('customer_id'),
+            'platform_id'       => $plat['id'],
+            'component_appid'   => $plat['appid'],
+			'appid'             => $authorization_info['authorizer_appid'],
+			'app_secret'        => '',
+			//'js_api_ticket_out_time',
+			//'js_api_ticket',
+			'api_type'          => $plat['api_type'],
+			//'use_time',
+			'origin_id'         => $authorizer_info['user_name'],
+			'app_name'          => $authorizer_info['nick_name'],
+			'service_type'      => $authorizer_info['service_type_info']['id'],
+			'img'               => $authorizer_info['qrcode_url'],
+			'auth_time'         => $now,
+			//'auth_out_time',
+			'token'             => $authorization_info['authorizer_access_token'],
+			'token_out'         => $authorization_info['expires_in'] + $now - 200,
+			'refresh_token'     => $authorization_info['authorizer_refresh_token'],
+			//'refresh_out',
+			//'verify_ticket',
+			'type' => 1,
+			'status' => 0,
+			//'domain',
+			/*'msg',
+	            'menu',
+	            'web',
+	            'notice',
+	            'user',
+	            'source',
+	            'shop',
+	            'card',
+	            'store',
+	            'scan',
+	            'wifi',
+	            'shake',
+	            'city',
+	            'ad',
+	            'receipt',
+	            'reg_miniapp',
+	            'man_miniapp',
+	            'calorie',
+	            'account',
+	            'kefu',
+	            'open_account',
+	            'plugin',
+	            'addr',
+*/
+		];
+
+		$func_info = [];
+		foreach ($authorization_info['func_info'] as $k1 => $v1) {
+			$func_info[] = $v1['funcscope_category']['id'];
+		}
+		$funcs = $this->funcInfo('all');
+		$fillable = $this->platformWechat->model->fillable;
+		foreach ($funcs as $k => $v) {
+			if (in_array($k, $fillable)) {
+				if (in_array($k, $funcs)) {
+					$wechat[$v] = 1;
+				} else {
+					$wechat[$v] = 0;
+				}
+			}
+		}
+
+		if ($had = $this->platformWechat->findBy('appid', $wechat['appid'], ['id'])) {
+			$this->platformWechat->update($wechat, $had['id']);
+		} else {
+			$this->platformWechat->create($wechat);
+		}
+		return $wechat;
+	}
+	/**
+	 * 授权后的 func_info 列表
+	 * @param int $id 返回id对应的名称
+	 * @param bool $all 返回功能数组列表
+	 * @return fixed
+	 */
+	public function funcInfo($id) {
+		$arr = [
+			1 => 'msg',
+			2 => 'user',
+			3 => 'account',
+			4 => 'web',
+			5 => 'shop',
+			6 => 'kefu',
+			7 => 'notice',
+			8 => 'card',
+			9 => 'scan',
+			10 => 'wifi',
+			11 => 'source',
+			12 => 'shake',
+			13 => 'store',
+			14 => 'pay',
+			15 => 'menu',
+			16 => 'identification',
+			17 => 'account',
+			18 => 'develop',
+			19 => 'kefu',
+			20 => 'login',
+			21 => 'da',
+			22 => 'city',
+			23 => 'ad',
+			24 => 'open_account',
+			25 => 'open_account',
+			26 => 'receipt',
+		];
+
+		if ($id === 'all') {
+			return $arr;
+		} else {
+			return isset($arr[$id]) ? $arr[$id] : '';
+		}
+	}
+
+	/**
+	 * 授权事件接收URL
+	 * 获取ComponentVerifyTicket
+	 */
+	public function platformServer() {
+		$xml = file_get_contents('php://input');
+		$input = request()->all();
+		$this->test->create(['type' => 'xml', 'content' => $xml]);
+		$this->test->create(['type' => 'input', 'content' => http_build_query($input)]);
+
+		$arr = XmlToArray($xml);
+
+		$component_appid = isset($arr['AppId']) ? $arr['AppId'] : $input['cappid'];
+		$plat = $this->platform->findBy('appid', $component_appid, $this->platform->model->fields);
+		if (!$plat) {
+			throw new \Exception('appid 异常，不存在对应开放平台。', 2000);
+		}
+
+		$encryptor = new Encryptor($plat['appid'], $plat['token'], $plat['token_key']);
+		$info = $encryptor->decrypt($arr['Encrypt'], $input['msg_signature'], $input['nonce'], $input['timestamp']);
+
+		$info = XmlToArray($info);
+		$event_type = isset($info['InfoType']) ? $info['InfoType'] : $info['MsgType'];
+		$this->test->create(['type' => $event_type, 'content' => json_encode($info, JSON_UNESCAPED_UNICODE)]);
+
+		if ($event_type == 'component_verify_ticket') {
+			$this->platform->update([
+				'component_verify_ticket' => $info['ComponentVerifyTicket'],
+			], $plat['id']);
+		}
+
+		$this->setOpenPlatform($plat['appid']);
+		$server = $this->openPlatform->server;
+		return $server->serve();
+	}
+	/**
+	 * 公众号消息与事件接收
+	 * @param Request $request
+	 * @return \Illuminate\Http\JsonResponse|mixed|\Symfony\Component\HttpFoundation\Response
+	 */
+	public function wechatEvent($request) {
+		$xml = file_get_contents('php://input');
+		$input = request()->all();
+		$this->test->create(['type' => 'wechatEvent.xml', 'content' => $xml]);
+		$this->test->create(['type' => 'wechatEvent.input', 'content' => http_build_query($input)]);
+
+		$arr = XmlToArray($xml);
+		$component_appid = $input['cappid'];
+		$this->setOpenPlatform($component_appid);
+		/** @var \EasyWeChat\OpenPlatform\Application $open_platform */
+		$authorizer_appid = substr($request->get('appid'), 1, -1);
+
+		/**
+		 * 全网发布
+		 */
+		if ($authorizer_appid == 'wx570bc396a51b8ff8') {
+			return $this->releaseToNetWork($authorizer_appid);
+		}
+
+		/**
+		 * 正常业务,根据实际需求自己实现
+		 */
+		// $official_account = WeChatAuthorizer::where('authorizer_appid', '=', $authorizer_appid)->first();
+		$official_account = $this->platformWechat->findByMap([
+			'appid' => $authorizer_appid,
+			'component_appid' => $component_appid,
+		], $this->platformWechat->model->fields);
+		if (empty($official_account)) {
+			return $this->result([], 2000, 'official account not authorization');
+		}
+
+        // $official_account_client = $this->openPlatform->officialAccount($official_account->authorizer_appid, $official_account->authorizer_refresh_token);
+        $official_account_client = $this->openPlatform->officialAccount($official_account->appid, $official_account->refresh_token);
+
+		$server = $official_account_client->server;
+		/**
+		 * 简单的处理 文本消息和事件
+		 */
+        $server->push(function ($message) {
+            switch ($message['MsgType']) {
+                case 'event':
+                    // return '收到事件消息';// 处理事件消息
+                    return $this->operateEvent($message);
+                    break;
+                case 'text':
+                    // return '收到文字消息';// 处理文本消息
+                    return $this->operateText($message);
+                    break;
+                case 'image':
+                    // return '收到图片消息';// 处理图片消息
+                    return $this->operateImage($message);
+                    break;
+                case 'voice':
+                    // return '收到语音消息';处理语音消息
+                    return $this->operateDefault($message);
+                    break;
+                case 'video':
+                    // return '收到视频消息';
+                    return $this->operateDefault($message);
+                    break;
+                case 'location':
+                    // return '收到坐标消息';
+                    return $this->operateDefault($message);
+                    break;
+                case 'link':
+                    // return '收到链接消息';
+                    return $this->operateDefault($message);
+                    break;
+                case 'file':
+                    // return '收到文件消息';
+                    return $this->operateDefault($message);
+                // ... 其它消息
+                default:
+                    // return '收到其它消息';// 默认消息处理
+                    return $this->operateDefault($message);
+                    break;
+            }
+        });
+		// $server->push(TextMessageHandler::class, Message::TEXT);
+		// $server->push(EventMessageHandler::class, Message::EVENT);
+
+		$response = $server->serve();
+		return $response;
+	}
+    /**
+     * 事件消息处理器
+     * @param array $message
+     */
+    private function operateEvent($message) {
+        // 事件消息处理器
+        // 只处理关注事件
+        if ('subscribe' == $message['Event']) {
+
+        }
+    }
+    /**
+     * 文本消息处理器
+     * @param array $message
+     */
+    private function operateText($message) {
+        // 文本消息处理器
+        $component_appid = request()->input('cappid');
+        $appid = substr(request()->input('appid'), 1, -1);
+        $keyword_info = $this->wechatMsgReplies->KeyWordMsg($component_appid, $appid, $message['Content']);
+        if (!$keyword_info) {
+            throw new \Exception('没有查询到对应的关键字！', 2000);
+        }
+
+        return $keyword_info['reply_content'];
+    }
+    /**
+     * 图片消息处理器
+     * @param array $message
+     */
+    private function operateImage($message) {
+        // 文本消息处理器
+    }
+    /**
+     * 默认消息处理
+     * @param array $message
+     */
+    private function operateDefault($message) {
+        // 事件默认处理器
+    }
+	/**
+	 * 处理全网发布相关逻辑
+	 * @param \EasyWeChat\OpenPlatform\Application $open_platform
+	 * @param $authorizer_appid
+	 * @return mixed
+	 */
+	private function releaseToNetWork($authorizer_appid) {
+		$message = $this->openPlatform->server->getMessage();
+
+		//返回API文本消息
+		if ($message['MsgType'] == 'text' && strpos($message['Content'], "QUERY_AUTH_CODE:") !== false) {
+			$auth_code = str_replace("QUERY_AUTH_CODE:", "", $message['Content']);
+			$authorization = $this->openPlatform->handleAuthorize($auth_code);
+			$official_account_client = $this->openPlatform->officialAccount($authorizer_appid, $authorization['authorization_info']['authorizer_refresh_token']);
+			$content = $auth_code . '_from_api';
+			$official_account_client['customer_service']->send([
+				'touser' => $message['FromUserName'],
+				'msgtype' => 'text',
+				'text' => [
+					'content' => $content,
+				],
+			]);
+
+			//返回普通文本消息
+		} elseif ($message['MsgType'] == 'text' && $message['Content'] == 'TESTCOMPONENT_MSG_TYPE_TEXT') {
+			$official_account_client = $this->openPlatform->officialAccount($authorizer_appid);
+			$official_account_client->server->push(function ($message) {
+				return $message['Content'] . "_callback";
+			});
+			//发送事件消息
+		} elseif ($message['MsgType'] == 'event') {
+			$official_account_client = $this->openPlatform->officialAccount($authorizer_appid);
+			$official_account_client->server->push(function ($message) {
+				return $message['Event'] . 'from_callback';
+			});
+		}
+		$response = $official_account_client->server->serve();
+		return $response;
+	}
+
+}

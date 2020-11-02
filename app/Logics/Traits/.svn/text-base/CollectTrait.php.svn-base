@@ -1,0 +1,170 @@
+<?php
+namespace App\Logics\Traits;
+
+use App\Logics\Repositories\src\AuthorRepository;
+use App\Logics\Repositories\src\NovelRepository;
+use App\Logics\Repositories\src\NovelSectionRepository;
+use Illuminate\Support\Facades\Storage;
+
+trait CollectTrait
+{
+    private $authors;
+    private $novels;
+    private $novelSections;
+
+    //protected $novelTypes;  // 小说分类信息
+    //protected $sexes;  // 小说性别分类
+    //protected $serialStatus; // 连载状态
+    protected $schemeHose;  // 协议和域名
+    protected $disk;        // 文件存储盘
+    protected $spidedHtml;  // 抓取到的html文件
+    protected $cookieCurlUA;  // curl UA
+
+    /**
+     * 上传图片或者文件到云对象存储
+     * @param string $path
+     * @param string $str 文件流
+     */
+    private function uploadCloud($path, $str, $re = 0) {
+
+        $dir = 'lm-novelspider/'. $this->novelWeb .'/' . $path;
+
+        try {
+            if (!Storage::disk($this->disk)->put($dir, $str))
+            {
+                throw new \Exception('文件上传失败！', 2001);
+            }
+
+            $url = Storage::disk($this->disk)->url($dir);
+            return $url;
+        } catch (\Exception $e) {
+            dump(
+                date('Y-m-d H:i:s'),
+                $e->getMessage(),
+                'error line : ' . $e->getLine(),
+                '--------------------------------------------------'
+            );
+            if ($re < 3) {
+                $re++;
+                sleep($re * 3);
+                return $this->uploadCloud($path, $str, $re);
+            }
+            throw new \Exception($e->getMessage(), $e->getCode());
+        }
+    }
+    /**
+     * 上传图片或者文件到云对象存储
+     * @param string $path
+     * @param string $str 文件流
+     */
+    private function deleteCloud($path) {
+        $path = substr($path, strpos($path, '.com/') + 5);
+
+        if (!Storage::disk($this->disk)->delete($path))
+        {
+            throw new \Exception('文件删除失败！', 2001);
+        }
+    }
+    /**
+     * 执行心跳操作
+     */
+    private function heartbeat() {
+        $start = time();
+        while (true) {
+            if ((time() - $start) > 7200) break; // 超过2小时了；就跳出循环继续执行抓取
+            $second = 60 * mt_rand(1, 8);
+            dump(
+                date('Y-m-d H:i:s'),
+                'heartbeat start = '.$start. ' ; now = '. time(),
+                'heartbeat sleep : ' . $second . ' 秒',
+                '-------------------------------------------------------'
+            );
+            sleep($second);
+            $this->classifyData();
+        }
+        return $start;
+    }
+    /**
+     * 带cookie 的 curl 抓取
+     */
+    private function cookieCurl($url, $option = [], $params = [], $type = 'url', $re = 0){
+        try {
+            return $this->doCookieCurl($url, $option, $params, $type);
+        } catch (\Exception $e) {
+            dump(
+                date('Y-m-d H:i:s'),
+                $e->getMessage(),
+                'error line : ' . $e->getLine(),
+                '--------------------------------------------------'
+            );
+            if ($re < 3) {
+                $re++;
+                sleep($re * 4);
+                return $this->cookieCurl($url, $option, $params, $type, $re);
+            }
+            throw new \Exception($e->getMessage(), $e->getCode());
+        }
+    }
+    /**
+     * 执行带cookie 的 curl 抓取
+     */
+    private function doCookieCurl($url, $option = [], $params = [], $type = 'url'){
+        $strCookie = $this->cookie . '; path=/';
+        if (!isset($option[CURLOPT_POST]) && $params) {
+            $option[CURLOPT_POST] = 1;
+        }
+        $option[CURLOPT_COOKIE] = $strCookie;
+        if ($params && $type) {
+            if ($type == 'url') {
+                $params = http_build_query($params);
+            } else {
+                $params = json_encode($params, JSON_UNESCAPED_UNICODE);
+            }
+            $option[CURLOPT_POSTFIELDS] = $params;
+        }
+        if (strpos($url, 'https:') !== false) {
+            $option[CURLOPT_SSL_VERIFYPEER] = false;
+            $option[CURLOPT_SSL_VERIFYHOST] = false;
+        }
+        $option[CURLOPT_URL] = $url; //请求url地址
+        $option[CURLOPT_FOLLOWLOCATION] = TRUE; //是否重定向
+        $option[CURLOPT_MAXREDIRS] = 4; //最大重定向次数
+        $option[CURLOPT_RETURNTRANSFER] = 1; //是否将结果作为字符串返回，而不是直接输出
+        $option[CURLOPT_TIMEOUT] = 15;
+        $option[CURLOPT_USERAGENT] = $this->cookieCurlUA ?: UserAgent('magic2Wechat');
+        // $option[CURLOPT_REFERER] = $refer;
+        $ch = curl_init();
+        curl_setopt_array($ch, $option);
+        $rel = curl_exec($ch);
+        $curl_no = curl_errno($ch);
+        $curl_err = curl_error($ch);
+        curl_close($ch);
+
+        return $rel;
+    }
+
+    /**
+     * 标签列表
+     */
+    private function novelTags(){
+        $arr = ['都市', '玄幻', '穿越', '精彩', '火爆', '劲爆', '打脸', '疯狂', '惊艳', '剧情', '星空'];
+        $i = 0;
+        $rel = [];
+        while ($i < 3) {
+            $str = $arr[array_rand($arr)];
+            if (!in_array($str, $rel)) {
+                $rel[] = $str;
+            }
+            $i++;
+        }
+        return implode('|', $rel);
+    }
+
+    public function initCollect() {
+        $this->authors      = new AuthorRepository();
+        $this->novels       = new NovelRepository();
+        $this->novelSections= new NovelSectionRepository();
+
+        $this->disk         = config('filesystems.default');
+    }
+}

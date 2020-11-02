@@ -1,0 +1,8 @@
+K 18
+svn:global-ignores
+V 21
+*.env
+*.idea
+storage
+
+END

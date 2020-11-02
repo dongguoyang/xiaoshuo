@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Logics\Models;
+
+class MoneyBtn extends Base
+{
+    protected $table = 'money_btns';
+
+    protected $fillable = ['price', 'reduction', 'coin', 'title', 'desc', 'default', 'status', 'tag', 'red_desc', 'updated_at', 'created_at'];
+
+    public $fields = [
+        'id',
+        'price', 'reduction', 'coin', 'title', 'desc', 'default', 'status', 'tag', 'red_desc', 'updated_at', 'created_at'
+    ];
+
+}

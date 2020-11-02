@@ -1,0 +1,425 @@
+<?php
+
+namespace App\Admin\Controllers;
+
+use App\Admin\Extensions\Grids\Buttons\DeleteAll;
+use App\Admin\Extensions\Grids\Buttons\WechatmsgInsert;
+use App\Admin\Models\InteractMsg;
+use App\Admin\Models\PlatformWechat;
+use App\Admin\Models\User;
+use App\Admin\Models\Wechat;
+use Encore\Admin\Controllers\AdminController;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Show;
+use Encore\Admin\Layout\Content;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Traits\ApiResponseTrait;
+use App\Logics\Traits\CallActionTrait;
+
+class InteractMsgController extends AdminController
+{
+    use ApiResponseTrait, CallActionTrait;
+    /**
+     * Title for current resource.
+     *
+     * @var string
+     */
+    protected $title = '互动消息';
+    public $customer;
+
+    public function customer() {
+        if(!empty($this->customer)) {
+            return $this->customer;
+        } else {
+            return $this->customer = Admin::user();
+        }
+    }
+
+    public function grid(){
+        $grid=new Grid(new InteractMsg());
+
+        $grid->column('name',__('任务名称'));
+        $grid->column('type',__('任务类型'))->display(function($type){
+             if($type==1){
+                 return '图文消息';
+             }else{
+                 return '文本消息';
+             }
+        });
+        $grid->column('send_at',__('发送时间'))->display(function ($start){
+            return 0 !=$this->status?$start:'';
+        });;
+        $grid->column('status',__('发送状态'))->display(function($status){
+            if($status==1){
+                return '已发送';
+            }else if($status==0){
+                return '待发送';
+            }else{
+                return '发送失败';
+            }
+        })->label(['default','success','error']);
+        $grid->column('total_success',__('成功'));
+        $grid->column('total_failure',__('失败'));
+        $grid->column('end_at',__('发送结束时间'))->display(function ($end){
+             return 0 !=$this->status?$end:'';
+        });
+        //return 0 != d.status?getLocalTime(d.send_at):'';
+        // 全部关闭
+        $grid->actions(function ($actions) {
+
+            // 去掉删除
+            $actions->disableDelete();
+
+            // 去掉编辑
+            $actions->disableEdit();
+
+            // 去掉查看
+            $actions->disableView();
+            $actions->append(new DeleteAll($actions->getKey(),'移除'));
+        });
+        $grid->disableCreateButton();
+        $grid->disableExport();
+        $grid->tools(function ($tools) {
+            $url = "/";
+            $icon = "fa-eye";
+            $text = "添加";
+            $id='addcors';
+
+            $tools->append(new WechatmsgInsert($url,$icon,$text,$id));
+            $tools->append ('<ul class="nav nav-pills hidden-md" style="display: inline-block;margin-bottom: -15px;">
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/index">授权信息</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/subscribe">外推关注回复</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/searchsub">直接关注回复</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/usertags">用户标签配置</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechat_msg_replies">关键词回复管理</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/menulist">菜单设置</a></li>
+                        <li class="active"><a href="/' . config('admin.route.prefix') . '/interactivemsg">互动消息</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/pushconf">智能推送</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/dailypush">每日推送</a></li>
+                        <li><a href="/' . config('admin.route.prefix') . '/wechatconfigs/subscribenext">新用户第二次推送</a></li>
+                    </ul>');
+        });
+        $grid->filter(function($filter){
+
+            // 去掉默认的id过滤器
+            $filter->disableIdFilter();
+            // 在这里添加字段过滤器
+            $filter->like('name', '任务名称');
+
+
+        });
+
+        return $grid;
+    }
+
+
+  /*  public function index(Content $content) {
+        // $request = new Request;
+        // $q = $request->query('q');// 获取不到数据
+        $customer = $this->customer();
+        $platformWechat = optional(PlatformWechat::where([
+            ['customer_id', '=', $customer['id']],
+            ['status', '=', 1]
+        ])->first())->toArray();
+        $user_rep = new UserRepository;
+        $active_users = $user_rep->NoteInteractInfo($platformWechat);
+        return $content->view('admin.interact.index', ['customer' => $customer, 'act_count' => $platformWechat && $active_users ? count($active_users) : 0]);
+    }*/
+
+    public function msgList() {
+        $q = request()->get('q');
+        if(!is_null($q)) {
+            return InteractMsg::where('name', 'like', "%$q%")->orderBy('id', 'desc')->paginate();
+        } else {
+            return InteractMsg::orderBy('id', 'desc')->paginate();
+        }
+    }
+    public  function msgListT(){
+        $page=\request()->input('page');
+        $limit=\request()->input('limit');
+        $offset=($page-1)*$limit;
+        $where=\request()->input('q');
+        if($where){
+            $ds = DB::table('interact_msgs')->orderBy('id', 'desc')->where('name','like',"%$where%")->offset($offset)->limit($limit)->get();
+            $total=DB::table('interact_msgs')->where('name','like',"%$where%")->orderBy('id','desc')->count();
+        }else {
+            $ds = DB::table('interact_msgs')->orderBy('id', 'desc')->offset($offset)->limit($limit)->get();
+            $total=DB::table('interact_msgs')->orderBy('id','desc')->count();
+        }
+
+        $data=[
+            'code'=>0,
+            'message'=>'',
+            'count'=>$total,
+            'data'=>$ds
+        ];
+        $data=\GuzzleHttp\json_encode($data);
+        return $data;
+    }
+    public function delete_list(){
+        try{
+            $id=\request()->input('id');
+            $post=InteractMsg::find($id);
+            if($post->delete()){
+                $msg=['code'=>200,'msg'=>'删除成功!!!'];
+            }else{
+                $msg=['code'=>101,'msg'=>'删除失败!!!'];
+            }
+        }catch (\Exception $e){
+            $msg=['code'=>$e->getCode(),'msg'=>$e->getMessage()];
+        }
+        $msg=\GuzzleHttp\json_encode($msg);
+        return $msg;
+    }
+
+
+
+
+    public function add(Content $content) {
+        return view('admin.interact.add');
+    }
+
+    public function test(Request $request) {
+        $params = $request->input();
+
+        if (isset($params['content']['image']) && strpos($params['content']['image'], 'http') === false) {
+            $params['content']['image'] = request()->getSchemeAndHttpHost() . $params['content']['image'];
+        }
+        $validator = Validator::make($params, [
+            'name'  =>  ['required', 'regex:/^[\x{4e00}-\x{9fa5}A-Za-z0-9_]+$/u', 'between:2,64'],
+            'type'  =>  ['required', Rule::in([1, 2])],
+            'uid'   =>  ['required', 'integer', 'min:1']
+        ], [
+            'name.required' =>  '任务名不能为空',
+            'name.regex'    =>  '任务名只能由汉字、字母、数字和下划线组成',
+            'name.between'  =>  '任务名长度只能在2至64位之间',
+            'type.required' =>  '必须传入消息类型',
+            'type.in'       =>  '不支持的消息类型',
+            'uid.required'  =>  '请先填写用户ID',
+            'uid.integer'   =>  '用户ID有误',
+            'uid.min'       =>  '用户ID非法'
+        ]);
+        if($validator->fails()) {
+            return $this->result([], 422, implode('；', $validator->errors()->all()));
+        }
+        // 单独验证其他参数
+        if($params['type'] == 1) {
+            $validator = Validator::make($params['content'], [
+                'title'     =>  ['required', 'regex:/^[\x{4e00}-\x{9fa5}A-Za-z0-9_]+$/u', 'between:2,64'],
+                'url'       =>  ['nullable', 'url'],
+                'image'     =>  ['required'],
+                'description'   =>  ['required', 'between:2,25']
+            ], [
+                'title.required'    =>  '图文标题不能为空',
+                'title.regex'       =>  '图文标题只能由汉字、字母、数字和下划线组成',
+                'title.between'     =>  '图文标题长度只能在2至64位之间',
+                'url.url'           =>  '原文链接必须是有效的URL',
+                'image.required'    =>  '请选择图片',
+                'description.required'  =>  '简介不能为空',
+                'description.between'   =>  '简介长度应在2至25位之间'
+            ]);
+            if($validator->fails()) {
+                return $this->result([], 422, implode('；', $validator->errors()->all()));
+            }
+            $params['content'] = json_encode($params['content'], JSON_UNESCAPED_UNICODE);
+        } else {
+            if(empty($params['content']['content'])) {
+                return $this->result([], 422, '请填写推送文本消息');
+            }
+            $params['content'] = $params['content']['content'];
+        }
+        if($params['send_to'] == 1) {
+            $params['send_type'] = '';
+        } else {
+            $validator = Validator::make($params['send_type'], [
+                'sex'       =>  ['required', Rule::in([1, 2])],
+                'recharge'  =>  ['required', Rule::in([1, 2])]
+            ], [
+                'sex.required'  =>  '请选择推送者性别',
+                'sex.in'        =>  '推送者性别设置有误',
+                'recharge.required'  =>  '请选择推送者充值状态',
+                'recharge.in'        =>  '推送者充值状态设置有误'
+            ]);
+            if($validator->fails()) {
+                return $this->result([], 422, implode('；', $validator->errors()->all()));
+            }
+            $params['send_type'] = json_encode($params['send_type'], JSON_UNESCAPED_UNICODE);
+        }
+        // have some fun
+        $customer = $this->customer();
+        $platformWechat = optional(Wechat::where([
+            ['customer_id', '=', $customer['id']],
+            ['status', '=', 1]
+        ])->first())->toArray();
+        if(empty($platformWechat)) {
+            return $this->result([], 403, '请先设置您的微信公众号');
+        }
+        // 检查用户是否存在
+        $user = User::find($params['uid']);
+        if(empty($user) || $user['platform_wechat_id'] != $platformWechat['id']) {
+            return $this->result([], 403, '请填写正确的、对应微信下的用户ID');
+        }
+        return $this->interactMsg(0, $user['id'], [
+            'platform_wechat_id'    =>  $platformWechat['id'],
+            'name'                  =>  $params['name'],
+            'type'                  =>  $params['type'],
+            'content'               =>  $params['content'],
+            'send_to'               =>  $params['send_to'],
+            'send_type'             =>  $params['send_type'],
+        ]);
+    }
+
+    public function doAdd(Request $request) {
+        $params = $request->input();
+        $validator = Validator::make($params, [
+            'name'  =>  ['required', /*'regex:/^[\x{4e00}-\x{9fa5}A-Za-z0-9_]+$/u', */'between:2,64'],
+            'type'  =>  ['required', Rule::in([1, 2])],
+            'send_to'   =>  ['required', Rule::in([1, 2])],
+            'send_at'   =>  ['required']
+        ], [
+            'name.required' =>  '任务名不能为空',
+            // 'name.regex'    =>  '任务名只能由汉字、字母、数字和下划线组成',
+            'name.between'  =>  '任务名长度只能在2至64位之间',
+            'type.required' =>  '必须传入消息类型',
+            'type.in'       =>  '不支持的消息类型',
+            'send_to.required'  =>  '发送对象不能为空',
+            'send_to.in'    =>  '发送对象有误',
+            'send_at.required'  =>  '必须设置发送时间'
+        ]);
+        if($validator->fails()) {
+            return $this->result([], 422, implode('；', $validator->errors()->all()));
+        }
+        // 单独验证其他参数
+        if(strtotime($params['send_at']) < (time() + 120)) {
+            return $this->result([], 422, '发送时间设置间隔不得低于2分钟！');
+        }
+        if (isset($params['content']['image']) && strpos($params['content']['image'], 'http') === false) {
+            $params['content']['image'] = request()->getSchemeAndHttpHost() . $params['content']['image'];
+        }
+        $params['send_at'] = strtotime($params['send_at']);
+        if($params['type'] == 1) {
+            $validator = Validator::make($params['content'], [
+                'title'     =>  ['required', 'between:2,64'],
+                'url'       =>  ['nullable', 'url'],
+                'image'     =>  ['required'],
+                'description'   =>  ['required', 'between:2,25']
+            ], [
+                'title.required'    =>  '图文标题不能为空',
+                // 'title.regex'       =>  '图文标题只能由汉字、字母、数字和下划线组成',
+                'title.between'     =>  '图文标题长度只能在2至64位之间',
+                'url.url'           =>  '原文链接必须是有效的URL',
+                'image.required'    =>  '请选择图片',
+                'description.required'  =>  '简介不能为空',
+                'description.between'   =>  '简介长度应在2至25位之间'
+            ]);
+            if($validator->fails()) {
+                return $this->result([], 422, implode('；', $validator->errors()->all()));
+            }
+            $params['content'] = json_encode($params['content'], JSON_UNESCAPED_UNICODE);
+        } else {
+            if(empty($params['content']['content'])) {
+                return $this->result([], 422, '请填写推送文本消息');
+            }
+            $params['content'] = $params['content']['content'];
+        }
+        if($params['send_to'] == 1) {
+            $params['send_type'] = '';
+        } else {
+            $validator = Validator::make($params['send_type'], [
+                'sex'       =>  ['required', Rule::in([0, 1, 2])],
+                'recharge'  =>  ['required', Rule::in([0, 1, 2])]
+            ], [
+                'sex.required'  =>  '请选择推送者性别',
+                'sex.in'        =>  '推送者性别设置有误',
+                'recharge.required'  =>  '请选择推送者充值状态',
+                'recharge.in'        =>  '推送者充值状态设置有误'
+            ]);
+            if($validator->fails()) {
+                return $this->result([], 422, implode('；', $validator->errors()->all()));
+            }
+            $params['send_type'] = json_encode($params['send_type'], JSON_UNESCAPED_UNICODE);
+        }
+        // let's do something real important
+        $customer = $this->customer();
+        $platformWechat = optional(Wechat::where([
+            ['customer_id', '=', $customer['id']],
+            ['status', '=', 1]
+        ])->first())->toArray();
+        if(empty($platformWechat)) {
+            return $this->result([], 403, '请先设置您的微信公众号');
+        }
+        $interact_msg = InteractMsg::create([
+            'platform_wechat_id'    =>  $platformWechat['id'],
+            'name'                  =>  $params['name'],
+            'type'                  =>  $params['type'],
+            'content'               =>  $params['content'],
+            'send_to'               =>  $params['send_to'],
+            'send_type'             =>  $params['send_type'],
+            'send_at'               =>  $params['send_at'],
+            'end_at'                =>  0,
+            'total_success'         =>  0,
+            'total_failure'         =>  0,
+            'status'                =>  0
+        ]);
+        if($interact_msg) {
+            // 加入任务队列，等待执行
+            // $this->callControllerMethod('App\Admin\Controllers\WechatConfigsController@interactMsg', []);
+            return $this->interactMsg($interact_msg->id);
+        } else {
+            return $this->result([], -10003, '数据处理失败，请稍后重试或联系技术客服');
+        }
+    }
+
+    /**
+     * 互动消息配置
+     * @param int $id 互动消息ID
+     * @param int $tester_id 测试用户ID
+     * @param array $interacInfo 测试互动消息信息所需内容
+     *              ['platform_wechat_id', 'name', 'type', 'content', 'send_to', 'send_type']
+     */
+    public function interactMsg($id, $tester_id=0, $interacInfo=[])
+    {
+        try
+        {
+            if ($tester_id > 0) {
+                // 发送执行测试任务
+                $plat_wechat = Wechat::select(['id', 'customer_id'])->find($interacInfo['platform_wechat_id']);
+                \App\Jobs\InteractMsg::dispatch($plat_wechat, /*$users,*/ $interacInfo, $tester_id); // 延迟执行任务
+
+                return $this->result([], 0, '已提交测试，请注意查看结果');
+            }
+
+            $interacInfo = InteractMsg::select([ 'id', 'platform_wechat_id', 'name', 'type', 'content', 'send_to', 'send_type', 'send_at', 'status'])->find($id);
+            if (!$interacInfo) {
+                throw new \Exception('没有互动任务信息！', 2000);
+            }
+            $interacInfo = $interacInfo->toArray();
+            $interacInfo['send_at'] = preg_match('/^\d{1,}$/', $interacInfo['send_at']) ? $interacInfo['send_at'] : strtotime($interacInfo['send_at']);
+            $plat_wechat = Wechat::select(['id', 'customer_id'])->find($interacInfo['platform_wechat_id']);
+            if(!$plat_wechat) {
+                throw new \Exception('微信数据缺失', 2000);
+            }
+            $plat_wechat = $plat_wechat->toArray();
+
+            $userRep = new UserRepository();
+            $users = $userRep->NoteInteractInfo($plat_wechat);
+            if (!$users) {
+                throw new \Exception('没有最近活跃用户！', 2000);
+            }
+            \App\Jobs\InteractMsg::dispatch($plat_wechat, /*$users,*/ $interacInfo)->delay($interacInfo['send_at'] - time()); // 延迟执行任务
+
+            return $this->result([], 0, '恭喜！任务已成功加入执行队列');
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], -10003, $e->getMessage());
+        }
+    }
+}

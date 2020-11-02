@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>加载中...</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+  <style>
+    /**
+ * Eric Meyer's Reset CSS v2.0 (http://meyerweb.com/eric/tools/css/reset/)
+ * http://cssreset.com
+ */
+    html, body, div, span, applet, object, iframe,
+    h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+    a, abbr, acronym, address, big, cite, code,
+    del, dfn, em, img, ins, kbd, q, s, samp,
+    small, strike, strong, sub, sup, tt, var,
+    b, u, i, center,
+    dl, dt, dd, ol, ul, li,
+    fieldset, form, label, legend,
+    table, caption, tbody, tfoot, thead, tr, th, td,
+    article, aside, canvas, details, embed,
+    figure, figcaption, footer, header,
+    menu, nav, output, ruby, section, summary,
+    time, mark, audio, video, input {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-size: 100%;
+      font-weight: normal;
+      vertical-align: baseline;
+    }
+
+    /* HTML5 display-role reset for older browsers */
+    article, aside, details, figcaption, figure,
+    footer, header, menu, nav, section {
+      display: block;
+    }
+
+    html, body {
+      background: #ffffff;
+      height: 100% !important;
+      box-sizing: border-box;
+    }
+
+    .am-navbar-title {
+      font-size: .15rem !important;
+    }
+
+    .more-touch {
+      font-size: .15rem;
+    }
+
+    #root > .container {
+    }
+
+    #root {
+      background: #f1f1f1;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 26.666666666666667vw !important;
+    }
+
+    body {
+      font-size: .15rem;
+      line-height: 1;
+      background: #f1f1f1;
+    }
+
+    blockquote, q {
+      quotes: none;
+    }
+
+    blockquote:before, blockquote:after,
+    q:before, q:after {
+      content: none;
+    }
+
+    table {
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    /* custom */
+    a {
+      color: #7e8c8d;
+      text-decoration: none;
+      -webkit-backface-visibility: hidden;
+    }
+
+    li {
+      list-style: none;
+    }
+
+    .clear_fix:after {
+      content: '.';
+      display: block;
+      clear: both;
+      height: 0;
+      overflow: hidden;
+      visibility: hidden;
+    }
+
+    .clear_fix {
+      zoom: 1;
+    }
+
+    .border-bottom {
+      border-bottom: 1px solid #f1f1f1;
+    }
+
+    .more-touch {
+      padding: .15rem 0;
+    }
+
+  </style>
+  <style>
+    .read-nav-bar {
+      box-sizing: border-box;
+      padding: 0 0.1rem;
+      width: 100%;
+      z-index: 999;
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 0.4rem;
+      display: flex;
+
+      background: rgb(247, 249, 250);
+      color: rgb(102, 102, 102);
+    }
+
+    .read-nav-bar .nav-item {
+      cursor: pointer;
+      padding: 0 0.1rem;
+      font-size: 0.14rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .read-nav-bar .nav-item-last {
+      flex: 1 1;
+      justify-content: flex-end;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .read-scroller {
+      -webkit-overflow-scrolling: touch;
+      height: 100%;
+      width: 100%;
+      overflow: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+
+    .read-container {
+      padding-top: 0.4rem;
+      background: #f1f1f1;
+      overflow-x: hidden;
+    }
+
+    .read-theme-nav-bar {
+      align-items: center;
+      height: 0.5rem;
+      box-sizing: border-box;
+      display: flex;
+      padding: 0 0.1rem;
+    }
+
+    .read-container .content {
+      text-indent: 2em;
+      margin-bottom: 0.25rem;
+      padding: 0 0.15rem;
+      margin-top: 0.25rem;
+    }
+
+    .read-container .book-shelf-options {
+      text-align: center;
+      margin-top: 0.4rem;
+      font-size: 0.14rem;
+      height: 0.24rem;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .read-container .book-shelf-not-in > span {
+      font-weight: bold;
+      background: #fcf1cf;
+      border-radius: 0.12rem;
+      width: 1.2rem;
+      justify-content: center;
+      display: flex;
+      align-items: center;
+    }
+
+    .read-container .bottom-actions {
+      position: relative;
+      justify-content: flex-end;
+      background: transparent;
+      height: 0.71rem;
+      width: 3.45rem;
+      margin: 0.3rem auto 0;
+      padding-bottom: 0.3rem;
+      align-items: center;
+    }
+
+    .read-container .bottom-actions .btn-chapter {
+      font-size: 0.15rem;
+      position: relative;
+      margin-top: 0.045rem;
+      justify-content: space-around;
+      display: flex;
+      align-items: center;
+      padding: 0 0.1rem;
+      box-sizing: border-box;
+      width: 1rem;
+      height: 0.41rem;
+      border-radius: 0.05rem;
+    }
+
+    .read-container .bottom-actions .menu-icon-wrapper {
+      height: 0.5rem;
+    }
+
+    .read-container .bottom-actions .menu-icon-wrapper {
+      font-size: 0.15rem;
+      display: flex;
+      align-items: center;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .read-container .bottom-actions .btn-chapter {
+      font-size: 0.15rem;
+      position: relative;
+      margin-top: 0.045rem;
+      justify-content: space-around;
+      display: flex;
+      align-items: center;
+      padding: 0 0.1rem;
+      box-sizing: border-box;
+      width: 1rem;
+      height: 0.41rem;
+      border-radius: 0.05rem;
+    }
+
+    .read-container .bottom-actions .btn-prev::after {
+      background: #999999;
+      height: 0.08rem;
+      width: 0.01rem;
+      content: " ";
+      position: absolute;
+      right: -0.15rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .read-container .bottom-actions .btn-chapter > p {
+      font-weight: bold;
+    }
+
+    .read-container .recommend-wrapper {
+      padding-bottom: 0.1rem;
+    }
+
+    .read-container .recommend-wrapper .title {
+      margin-bottom: 0.15rem;
+      background: rgba(40, 40, 40, 0.05);
+      font-size: 0.15rem;
+      height: 0.44rem;
+      display: flex;
+      padding-left: 0.1rem;
+      align-items: center;
+    }
+
+    .read-container .recommend-wrapper .recommend-link {
+      box-sizing: border-box;
+      padding: 0 0.1rem;
+      display: block;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.2rem;
+      font-size: 0.15rem;
+      line-height: 0.25rem;
+      text-decoration: underline;
+      color: #3688ff;
+    }
+
+    .read-subscribe {
+      padding-top: 0.15rem;
+      background: #f1f1f1;
+      padding-bottom: 0.3rem;
+      width: 100%;
+    }
+
+    .read-subscribe .tip {
+      font-size: 0.15rem;
+      color: #333333;
+      margin-bottom: 0.2rem;
+      text-align: center;
+      margin-top: 0.3rem;
+    }
+
+    .read-subscribe .sub-tip {
+      color: #999999;
+      font-size: 0.12rem;
+      margin-bottom: 0.2rem;
+      text-align: center;
+    }
+
+    .read-subscribe {
+      padding-top: 0.15rem;
+      background: #f1f1f1;
+      padding-bottom: 0.3rem;
+      width: 100%;
+    }
+
+    .read-theme-nav-bar {
+      align-items: center;
+      height: 0.5rem;
+      box-sizing: border-box;
+      display: flex;
+      padding: 0 0.1rem;
+    }
+
+    .read-theme-nav-bar .skin-item {
+      border: 0.01rem solid #ffffff;
+      border-radius: 0.07rem;
+      margin-right: 0.12rem;
+      width: 0.24rem;
+      height: 0.24rem;
+    }
+
+    .read-theme-nav-bar .font-options-wrapper {
+      flex: 1 1;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .read-theme-nav-bar .font-options-wrapper .font-options {
+      display: flex;
+      align-items: center;
+    }
+
+    .read-theme-nav-bar .font-options-wrapper .font-options .btn {
+      width: 0.28rem;
+      height: 0.22rem;
+      display: flex;
+      align-items: center;
+      font-size: 0.13rem;
+      text-align: center;
+      border: 0.01rem solid #333333;
+    }
+
+    .read-theme-nav-bar .font-options-wrapper .btn:first-of-type {
+      margin-right: 0.2rem;
+    }
+
+    .read-theme-nav-bar .font-options-wrapper .btn {
+      box-sizing: border-box !important;
+      overflow: hidden;
+      width: 0.5rem !important;
+    }
+
+    .am-button {
+      display: block;
+      outline: 0 none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+      padding: 0;
+      text-align: center;
+      font-size: 18px;
+      height: 47px;
+      line-height: 47px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      white-space: nowrap;
+      color: #000;
+      background-color: #fff;
+      border: 1PX solid #ddd;
+      border-radius: 5px;
+    }
+
+    .am-button {
+      display: block;
+      outline: 0 none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+      padding: 0;
+      text-align: center;
+      font-size: 18px;
+      height: 47px;
+      line-height: 47px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      white-space: nowrap;
+      color: #000;
+      background-color: #fff;
+      border: 1PX solid #ddd;
+      border-radius: 5px;
+    }
+
+    .read-nav-bar .nav-item-last .btn-feedback {
+      font-size: 0.15rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .read-container .bottom-actions .btn-chapter {
+      font-size: 0.15rem;
+      position: relative;
+      margin-top: 0.045rem;
+      justify-content: space-around;
+      display: flex;
+      align-items: center;
+      padding: 0 0.1rem;
+      box-sizing: border-box;
+      width: 1rem;
+      height: 0.41rem;
+      border-radius: 0.05rem;
+    }
+
+    .read-container .bottom-actions .btn-chapter {
+      font-size: 0.15rem;
+      position: relative;
+      margin-top: 0.045rem;
+      justify-content: space-around;
+      display: flex;
+      align-items: center;
+      padding: 0 0.1rem;
+      box-sizing: border-box;
+      width: 1rem;
+      height: 0.41rem;
+      border-radius: 0.05rem;
+    }
+
+    .read-container .bottom-actions .btn-prev::after {
+      background: #999999;
+      height: 0.08rem;
+      width: 0.01rem;
+      content: " ";
+      position: absolute;
+      right: -0.15rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .read-container .bottom-actions .btn-next::after {
+      background: #999999;
+      height: 0.08rem;
+      width: 0.01rem;
+      content: " ";
+      position: absolute;
+      left: -0.15rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .read-container .bottom-actions .btn-prev {
+      float: left;
+    }
+
+    .read-container .bottom-actions .btn-next {
+      float: right;
+    }
+
+    .read-subscribe .img-wrapper img {
+      box-shadow: 0 0.05rem 0.05rem 0 rgba(0, 0, 0, 0.05);
+      display: block;
+      width: 1.5rem;
+      height: 1.5rem;
+      margin: 0 auto;
+    }
+
+    .am-button {
+      display: flex;
+      justify-content: center;
+      letter-spacing: .5em;
+    }
+  </style>
+  <style>
+
+    .loader {
+      position: fixed !important;
+      top: 50%;
+      left: 50%;
+      margin: auto;
+      margin-top: -4em;
+      margin-left: -4em;
+      font-size: .03rem;
+      text-indent: -9999em;
+      width: 8em;
+      height: 8em;
+      border-radius: 50%;
+      background: #959595;
+      background: -moz-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+      background: -webkit-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+      background: -o-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+      background: -ms-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+      background: linear-gradient(to right, #959595 10%, rgba(255, 255, 255, 0) 42%);
+      position: relative;
+      -webkit-animation: load3 1.4s infinite linear;
+      animation: load3 1.4s infinite linear;
+      -webkit-transform: translateZ(0);
+      -ms-transform: translateZ(0);
+      transform: translateZ(0)
+    }
+
+    .loader:before {
+      width: 50%;
+      height: 50%;
+      background: #959595;
+      border-radius: 100% 0 0 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      content: ''
+    }
+
+    .loader:after {
+      background: #fff;
+      width: 75%;
+      height: 75%;
+      border-radius: 50%;
+      content: '';
+      margin: auto;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0
+    }
+
+    @-webkit-keyframes load3 {
+      0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes load3 {
+      0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg)
+      }
+    }
+
+    .read-subscribe .app-name {
+      font-size: 0.14rem;
+      color: #999999;
+      text-align: center;
+      margin-top: 0.15rem;
+    }
+
+    .read-container .content-line {
+      line-height: 1.5em;
+      margin-bottom: 1.5em;
+      text-indent: 2em;
+    }
+
+    .read-theme-nav-bar .skin-item.active {
+      border: 0.01rem solid #3688ff;
+    }
+
+    .novel-toast {
+      transition: all .3s;
+      background: rgba(0, 0, 0, .8);
+      z-index: 999;
+      left: 50%;
+      top: 50%;
+      line-height: 1.5em;
+      text-align: center;
+      padding: .1rem;
+      transform: translateY(-50%) translateX(-50%);
+      position: fixed;
+      height: 0.4rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: .1rem;
+      color: #ffffff !important;
+    }
+
+    .novel-toast p {
+      font-size: .15rem;
+      color: #ffffff !important;
+      line-height: .5rem;
+    }
+
+    .toast {
+      transition: all .3s;
+    }
+
+    /*# sourceMappingURL=Read2Popup.css.map */
+  </style>
+</head>
+<body>
+<div style="display: none" id="root">
+  <div class="read-nav-bar" style="background: rgb(247, 249, 250); color: rgb(102, 102, 102);">
+    <div class="nav-item back">返回</div>
+    <div class="nav-item to-home">首页</div>
+    <div class="nav-item to-history">阅读历史</div>
+    <div class="nav-item to-recharge">充值</div>
+    <div class="nav-item no-line to-feedback">反馈</div>
+    <div class="nav-item-last">
+      <div class="btn-feedback to-complain"><img src="http://novelsys.oss-cn-shenzhen.aliyuncs.com/front/read_icon.png" style="width: 0.26rem; height: 0.26rem;" alt=""><p style="margin-left: .05rem; font-size: .13rem;">投诉</p></div>
+    </div>
+  </div>
+  <div class="read-scroller">
+    <div class="read-container" style="background: rgb(209, 209, 209);">
+      <div class="read-theme-nav-bar">
+        <div type="普通" class="skin-item" style="background: rgb(245, 245, 245);"></div>
+        <div type="泥巴色" class="skin-item"
+             style="background: url(&quot;https://qcdn.zhangzhongyun.com/spa/179c1ccfd3.jpg&quot;) 100% center repeat rgb(228, 200, 161);"></div>
+        <div type="灰色" class="skin-item" style="background: rgb(209, 209, 209);"></div>
+        <div type="夜间模式" class="skin-item"
+             style="background: url(&quot;https://qcdn.zhangzhongyun.com/spa/d852cd8048.png&quot;) 50% center no-repeat rgb(27, 23, 20);"></div>
+        <div class="font-options-wrapper">
+          <div class="font-options"><a type="decreaseFont" role="button" class="am-button btn font-btn"
+                                       aria-disabled="false"
+                                       style="background-color: rgb(255, 255, 255);"><span>A-</span></a><a
+                  role="button"
+                  type="addFont"
+                  class="am-button btn font-btn"
+                  aria-disabled="false"
+                  style="background-color: rgb(255, 255, 255);"><span>A+</span></a>
+          </div>
+        </div>
+      </div>
+      <div id="novel-content" class="content"
+           style="color: rgb(95, 95, 95); font-size: 0.2rem; line-height: 0.4rem;"></div>
+      <p class="book-shelf-options book-shelf-not-in"><span style="color: rgb(95, 95, 95);">点击加入书架</span></p>
+      <div class="bottom-actions">
+        <div class="btn-chapter btn-prev" style="color: rgb(95, 95, 95);"><p style="opacity: 1;">上一章节</p></div>
+        <div class="menu-icon-wrapper" style="color: rgb(95, 95, 95); font-weight: bold;">目录</div>
+        <div class="btn-chapter btn-next" style="color: rgb(95, 95, 95);"><p style="opacity: 1;">下一章节</p></div>
+      </div>
+      <!--<div class="recommend-wrapper">-->
+        <!--<p class="title" style="color: rgb(102, 102, 102);">相关推荐</p>-->
+        <!--        <a class="recommend-link" style="color: rgb(204, 162, 102);">浓浓乡情 ·淡淡乡愁,儿媳妇自愿让老公公...</a>-->
+        <!--        <a class="recommend-link" style="color: rgb(204, 162, 102);">小说情节跌宕起伏、扣人心弦是一本难得的情节与文笔俱佳的好书。</a>-->
+        <!--        <a class="recommend-link" style="color: rgb(204, 162, 102);">叶臣借着自己小姨在村委会干妇女主任一职，也混到了一个暑假看打水机的临时活计</a>-->
+      <!--</div>-->
+      <!--            <div class="read-subscribe"><p class="tip">关注公众号，尽享更多优秀阅读</p>-->
+      <!--                <p class="sub-tip">长按二维码即可识别</p>-->
+      <!--                <div class="img-wrapper"><img src="" alt=""></div>-->
+      <!--                <p class="app-name"></p>-->
+      <!--            </div>-->
+    <!--</div>-->
+  </div>
+</div>
+<style>
+  .reload-read-container {
+    left: 0;
+    top: 0;
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: fixed;
+    background: rgba(0, 0, 0, .5);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .real {
+    position: relative;
+    box-sizing: border-box;
+    padding-top: .9rem;
+    width: 2.5rem;
+    height: 2.3rem;
+    display: block;
+  }
+
+  .real-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+  }
+
+  .real-loading {
+    margin: 0 auto;
+    position: absolute;
+    width: .43rem;
+    height: .45rem;
+    display: block;
+    left: 0;
+    right: 0;
+    top: .1rem;
+    animation: rotateInfinite infinite 1s linear;
+  }
+
+  .real-title {
+    position: relative;
+    font-size: .15rem;
+    color: #333333;
+    display: block;
+    line-height: 1.2em;
+    text-align: center;
+  }
+
+  .real-desc {
+    text-align: center;
+    position: relative;
+    font-size: .12rem;
+    color: #999999;
+    line-height: 1.2em;
+    margin-top: .2rem;
+    display: block;
+  }
+
+  .real-btn {
+    margin: .3rem auto 0;
+    position: relative;
+    width: 2.1rem;
+    height: .3rem;
+    border-radius: .15rem;
+    font-size: .14rem;
+    line-height: .3rem;
+    text-align: center;
+    color: #ffffff;
+    background: linear-gradient(to left, #ee8a29, #f6b651);
+    box-shadow: 0 0 .05rem .01rem rgba(0, 0, 0, .08);
+  }
+
+  @keyframes rotateInfinite {
+    0% {
+      transform: rotateZ(0);
+    }
+
+    100% {
+      transform: rotateZ(360deg);
+    }
+  }
+</style>
+<div class="reload-read-container" style="display: none">
+  <div class="real">
+    <img class="real-bg" src="http://novelsys.oss-cn-shenzhen.aliyuncs.com/front/real_bg.png" alt=""/>
+    <img class="real-loading" src="http://novelsys.oss-cn-shenzhen.aliyuncs.com/front/real_loading.png" alt=""/>
+    <p class="real-title">重新加载</p>
+    <p class="real-desc">网络出现错误，请点击按钮重新加载</p>
+    <div class="real-btn">重新加载</div>
+  </div>
+</div>
+<script src="https://renwuwu.oss-cn-beijing.aliyuncs.com/renwuwu/front/h5/wx_entry/js/promise.js"></script>
+<script>
+  var Toast = {
+    loading: function (text) {
+      var prev = document.querySelector(".loader");
+      if (prev !== null) {
+        prev.remove();
+      }
+      var elem;
+
+      if (text === undefined) {
+        elem = document.createElement("div");
+        elem.className = "loader toast";
+        document.body.appendChild(elem);
+      } else {
+        elem = document.createElement("div");
+        elem.className = "novel-toast toast";
+        elem.innerHTML = text;
+      }
+      elem.style.opacity = 0;
+
+      document.body.appendChild(elem);
+      setTimeout(function () {
+        elem.style.opacity = 1;
+      }, 0);
+    },
+    hide: function () {
+      var elem = document.querySelector(".toast");
+      elem.style.opacity = 0;
+      setTimeout(function () {
+        elem.remove();
+      }, 300);
+    }
+  };
+</script>
+<script>
+  function bgColor(themeType) {
+    switch (themeType) {
+      case "普通":
+        return "#ededed";
+      case "泥巴色":
+        return "#e4c8a1 url(https://qcdn.zhangzhongyun.com/spa/179c1ccfd3.jpg) repeat center 100%";
+      case "粉色":
+        return "#f1e8e7";
+      case "草原绿":
+        return "#e7f1e8";
+      case "灰色":
+        return "#d1d1d1";
+      case "夜间模式":
+        return "#1b1714";
+    }
+  }
+
+  function fontColor(themeType) {
+    switch (themeType) {
+      case "普通":
+        return "#373e44";
+      case "泥巴色":
+        return "rgba(0, 0, 0, .85)";
+      case "粉色":
+        return "#896147";
+      case "草原绿":
+        return "#506d54";
+      case "灰色":
+        return "#5f5f5f";
+      case "夜间模式":
+        return "#746854";
+    }
+  }
+
+  var getReadTheme = (function () {
+    var theme = JSON.parse(window.localStorage.getItem("readTheme"));
+    if (theme === null) {
+      theme = {fontSize: 20, theme: "普通"};
+      window.localStorage.setItem("readTheme", JSON.stringify(theme));
+    }
+    var listeners = [];
+    var subId = 0;
+
+    return function () {
+      return {
+        "addEventListener": function (fn) {
+          var id = ++subId;
+          listeners.push({id: id, fn: fn});
+          return id;
+        },
+        "getFontSize": function () {
+          return theme.fontSize;
+        },
+        "getTheme": function () {
+          return theme.theme;
+        },
+        "setTheme": function (_theme) {
+          theme.theme = _theme;
+          window.localStorage.setItem("readTheme", JSON.stringify(theme));
+          listeners.forEach(function (sub) {
+            sub.fn.call(theme);
+          });
+        },
+        "setFontSize": function (size) {
+          theme.fontSize = size;
+          window.localStorage.setItem("readTheme", JSON.stringify(theme));
+          listeners.forEach(function (sub) {
+            sub.fn.call(theme);
+          });
+        },
+        "unsubscribe": function (id) {
+          var idx = listeners.findIndex(function (item) {
+            return item.id === id;
+          });
+
+          listeners.splice(idx, 1);
+        }
+      };
+    };
+  }());
+
+  function obj2str(obj) {
+    var result = "";
+
+    var keys = Object.keys(obj);
+    for (var i = 0; i < keys.length; i++) {
+      if (obj.hasOwnProperty(keys[i])) {
+        result += (result === "" ? "" : "&") + keys[i] + "=" + obj[keys[i]];
+      }
+    }
+    return result;
+  }
+
+  function render(data) {
+    document.querySelector("#novel-content").innerHTML = "";
+    if (data.data.content.indexOf("<div") !== -1) {
+      data.data.content = data.data.content.replace(/<br>|<br\/>/g, "<br>&nbsp;&nbsp;").replace(/<p/g, "<p class='content-line'");
+    } else {
+      const elem = document.createElement("div");
+      elem.innerHTML = data.data.content;
+      data.data.content = [...elem.childNodes]
+      // 过滤br标签
+    .filter((_node) => _node.nodeName !== "BR")
+      // 映射出文字
+    .map((_node) => _node.nodeName === "#text" ? _node.nodeValue : _node.textContent)
+      // 去掉前面的空格
+    .map((_val) => {
+        return _val === null ? "" : _val.replace(/^\s*/g, "").replace(/nbsp;/g, "");
+    })
+      // 生成p标签
+    .map((_val) => `<p class="content-line">${_val}</p>`)
+      // 合并数组为字符串
+    .reduce((prev, next) => prev + next, "");
+     data.data.content = '<p class="content-line" style="font-weight: bold">'.concat(data.data.title,"</p>", data.data.content)
+      elem.remove();
+    }
+
+    return true;
+  }
+
+  function renderRecommends(data) {
+
+  }
+
+  // TODO 域名位置
+  // var baseUrl = "http://dev.zmr029.com/";
+  var baseUrl = "";
+  var post = function (url, params) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", baseUrl + url);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+      var body = params === undefined
+              ? ""
+              : obj2str(params);
+
+      xhr.withCredentials = true;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(xhr);
+          }
+        }
+      };
+      xhr.send(body);
+    });
+  };
+</script>
+<script>
+  var params = GetRequest();
+  var id = parseInt(params['novel_id']);
+  var section = parseInt(params['section']);
+  var customerId = params['cid'];
+  var prev = params["prev"];
+  var start = params["start"];
+  var currentChapter;
+  var totalChapters;
+  var currentData;
+  // 创建标题
+  function createTitle(title) {
+    var elem = document.createElement("p");
+    elem.className = "novel-title";
+    elem.innerText = title;
+    return elem;
+  }
+
+  function handleThemeChange() {
+    var obj = getReadTheme();
+    var fontSize = obj.getFontSize();
+    var theme = obj.getTheme();
+
+    // 设置主题按钮激活样式
+    var themeBtns = document.querySelectorAll(".skin-item");
+    themeBtns.forEach(function (btn) {
+      if (btn.getAttribute("type") === theme) {
+        if (btn.className.indexOf("active") === -1) {
+          btn.className = btn.className + " active";
+        }
+      } else {
+        btn.className = "skin-item";
+      }
+    });
+
+    var container = document.querySelector(".read-container");
+    var novelContent = document.querySelector("#novel-content");
+
+    if (theme === "夜间模式") {
+      document.querySelectorAll(".font-btn").forEach(function (btn) {
+        btn.style.borderColor = "#999";
+        btn.style.backgroundColor = "rgb(51, 51, 51)";
+        btn.style.color = "#666666";
+      });
+    } else {
+      document.querySelectorAll(".font-btn").forEach(function (btn) {
+        btn.style.borderColor = "#333";
+        btn.style.backgroundColor = "rgb(255, 255, 255)";
+        btn.style.color = "#666666";
+      });
+    }
+
+    // 设置背景色
+    container.style.background = bgColor(theme);
+
+    // 设置文字颜色
+    novelContent.style.color = fontColor(theme);
+
+    // 设置字体大小
+    novelContent.style.fontSize = fontSize + "px";
+
+    // 设置推荐颜色
+    document.querySelectorAll(".recommend-link").forEach(function (link) {
+      if (theme === "夜间模式") {
+        link.style.color = "rgb(173, 143, 94)";
+      } else {
+        link.style.color = "rgb(204, 162, 102)";
+      }
+    });
+
+    // 设置加入书架的颜色
+    var addToShelfBtn = document.querySelector(".book-shelf-in");
+    if (addToShelfBtn !== null) {
+      addToShelfBtn.style.color = fontColor(theme);
+    }
+
+    // 设置上一张下一章目录的好颜色
+    document.querySelector(".bottom-actions").querySelectorAll("div").forEach(function (div) {
+      div.style.color = fontColor(theme);
+    });
+  }
+
+
+  // 创建元素
+  function createLine(text) {
+    var elem = document.createElement("p");
+    elem.className = "content-line";
+    elem.innerHTML = text;
+    return elem;
+  }
+
+  // 追加元素仅content
+  function createContent(elem) {
+    document.querySelector("#novel-content").appendChild(elem);
+  }
+
+  // 获取所有url参数
+  function GetRequest() {
+    var url = window.top.location.hash;
+    var theRequest = new Object();
+    if (url.indexOf("#") != -1) {
+      var strs, str = url.substr(1);
+      strs = str.split("&");
+      for (var i = 0; i < strs.length; i++) {
+        theRequest[strs[i].split("=")[0]] = decodeURI(strs[i].split("=")[1]);
+      }
+    }
+    return theRequest;
+  }
+
+  var getNovelInfoWithExtra = (function () {
+    var extraData;
+
+    return function load(next) {
+      // 请求小说数据并初始化页面
+      var requestParams = {
+        id: id,
+        section: next === true ? section + 1 : section,
+        page: prev === "1" ? "prev" : "next",
+        cid: customerId,
+        start: start
+      };
+      console.log(12);
+      console.log(section);
+      if (params["subscribe"] !== undefined) {
+        requestParams["subscribe"] = params["subscribe"];
+      }
+
+      if (requestParams.page === 'prev') {
+        extraData = undefined;
+      }
+      //console.log(section, '预载内容', extraData);
+      if (extraData !== undefined && (extraData.err_code !== 0 || extraData.data.num >= section)) {
+        return new Promise(function (resolve) {
+          if (extraData.err_code === 0) {
+            var _requestParams = JSON.parse(JSON.stringify(requestParams));
+            _requestParams.section = extraData.data.num + 1;
+
+            _requestParams['pre_content'] = 1;
+            post("/novel/sectioninfo", _requestParams)
+                    .then(function (data) {
+                      extraData = data;
+                    });
+          }
+
+          resolve(extraData);
+        });
+      }
+
+      return post("/novel/sectioninfo", requestParams)
+              .then(function (data) {
+                if (data.err_code === 0) {
+                  var _requestParams = JSON.parse(JSON.stringify(requestParams));
+                  _requestParams.section = data.data.num + 1;
+                  _requestParams['pre_content'] = 1;
+                  post("/novel/sectioninfo", _requestParams)
+                          .then(function (data) {
+                            extraData = data;
+                          });
+                }
+
+                return data;
+              });
+    };
+  }());
+
+  function loadContent() {
+    Toast.loading();
+
+    return getNovelInfoWithExtra()
+            .then(function (data) {
+              if (data.err_code !== 0) {
+                // 重置hash参数
+                var _params = GetRequest();
+
+                if (_params["prev"] !== undefined && _params["prev"] === "1") {
+                  // _params["section"] = parseInt(data.data.num) + 1;
+                  _params["section"] = parseInt(_params["section"]) + 1;
+                  // section = parseInt(data.data.num) + 1;
+                  section = parseInt(_params["section"]) + 1;
+                  delete _params["prev"];
+                } else if (_params['section'] !== '0') {
+                  section = parseInt(_params["section"]) - 1;
+                  _params["section"] = parseInt(_params["section"]) - 1;
+                  // section = parseInt(data.data.num) - 1;
+                  // _params["section"] = parseInt(data.data.num) - 1;
+                }
+                window.history.replaceState(null, null, window.location.origin + window.location.pathname + '#' + obj2str(_params));
+                // window.location.hash = obj2str(_params);
+
+                // 强制关注
+                if (data.err_code === 804) {
+                  window.location.href = "/front/#" + "/follow-" + id + "-" + (section + 1) + ".html?cid=" + customerId;
+                  // 老牟用的下面我注释的这个
+                  //window.location.href = window.location.pathname + "/front/#" + "/follow-" + id + "-" + (section + 1) + ".html?cid=" + customerId;
+                  return;
+                }
+
+                if (data.err_code === 802) {
+                  // 标记为已跳转支付 并跳转支付
+                  var url = "/front/#" + "/need-pay-" + id + "-" + (section + 1) + ".html?cid=" + customerId;
+                  // 老牟用的下面我注释的这个
+                  // var url = "/front/#" + "/need-pay-" + id + "-" + (section + 1) + ".html?cid=" + customerId;
+                  // window.localStorage.setItem('payCallbackUrl', JSON.stringify('/front/#/read/' + _params['novel_id'] + '-' + _params['section'] + '.html?cid=' + _params['cid']));
+                  window.localStorage.setItem('payCallbackUrl', '"' + window.location.pathname + window.location.hash + '"');
+                  window.location.href = url;
+                  return;
+                }
+
+                return;
+              }
+
+              section = data.data.num;
+
+              if (!data.data.content) {
+                document.querySelector('.reload-read-container').style.display = 'flex';
+                return;
+              }
+              document.querySelector('.reload-read-container').style.display = 'none';
+
+              // 设置页面标题
+              window.document.title = data.data.novel_title;
+              // 设置缓存数据
+              currentChapter = data.data.num;
+              totalChapters = data.data.section_count;
+              currentData = data;
+
+              render(data);
+
+              document.querySelector(".btn-next").style.opacity = data.data.num >= data.data.section_count ? "0.5" : "1";
+
+              document.querySelector(".btn-prev").style.opacity = data.data.num === 1 ? "0.5" : "1";
+
+              // 设置 添加书架按钮的样式
+              var bookShelfOptionElem = document.querySelector(".book-shelf-options");
+              if (data.data.is_bookstore) {
+                bookShelfOptionElem.className = bookShelfOptionElem.className.replace(/book-shelf-not-in/g, "book-shelf-in");
+                bookShelfOptionElem.querySelector("span").innerHTML = "该书已在书架";
+              } else {
+                bookShelfOptionElem.className = bookShelfOptionElem.className.replace(/book-shelf-in/g, "book-shelf-not-in");
+                bookShelfOptionElem.querySelector("span").innerHTML = "点击加入书架";
+              }
+
+              createContent(createLine(data.data.content));
+
+              var iframe = document.createElement("iframe");
+              iframe.setAttribute("src", "/front/#/index.html");
+              iframe.setAttribute("frameBorder", "0");
+              iframe.style.display = "none";
+              document.body.appendChild(iframe);
+
+              document.querySelector(".read-scroller").scrollTop = 0;
+              Toast.hide();
+            });
+  }
+
+  function initializeQrcode() {
+    post("/api/common/wechatinfo", {customer_id: params["customer_id"]})
+            .then(function (data) {
+              document.querySelector(".img-wrapper").querySelector("img").setAttribute("src", data.data.img);
+              document.querySelector(".app-name").innerHTML = data.data.app_name;
+            });
+  }
+
+  function addToBookStore() {
+    return post("/operate/addbookstore", {novel_id: id, section: section});
+  }
+
+  function getRecommends() {
+    return post("/novel/sectionrecommend", {id: id});
+  }
+
+  // 构建推荐内容
+  function createRecommonds(data) {
+    /*var container = document.querySelector(".recommend-wrapper");
+    var params = GetRequest();
+
+    data.data.forEach(function (item) {
+      var a = document.createElement("a");
+      a.className = "recommend-link";
+      a.setAttribute("href", "javascript:void(0);");
+      a.innerHTML = item.desc.length > 38 ? item.desc.slice(0, 35) + "..." : item.desc;
+      a.addEventListener("click", function (e) {
+        params["novel_id"] = item.id;
+        params["section"] = 0;
+        window.location.href = window.location.pathname + "?v=" + Math.random() + "#" + obj2str(params);
+      });
+      container.appendChild(a);
+    });
+
+    // 重新渲染一次以保证 推荐内容的颜色跟主题色对应
+    handleThemeChange();*/
+  }
+
+  window.onpageshow = function (e) {
+    if (e.persisted) {
+      window.location.reload();
+    }
+  };
+
+  window.onload = function () {
+
+    window.addEventListener('popstate', function (state) {
+      window.location.reload();
+    });
+
+    // 更改主题时触发重渲染
+    getReadTheme().addEventListener(handleThemeChange);
+    // 初始化执行一次
+    handleThemeChange();
+
+    // 为增加减小字体按钮绑定事件
+    document.querySelectorAll(".font-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var readTheme = getReadTheme();
+        var prev = btn.getAttribute("type") === "decreaseFont";
+
+        // 最小21号字
+        if (prev && parseInt(readTheme.getFontSize()) <= 21) {
+          return;
+        }
+        readTheme.setFontSize(prev ? readTheme.getFontSize() - 1 : readTheme.getFontSize() + 1);
+      });
+    });
+
+    // 为所有主题切换按钮绑定时间
+    document.querySelectorAll(".skin-item").forEach(function (item) {
+      item.addEventListener("click", function (e) {
+
+        // 动态设置
+        var type = e.target.getAttribute("type");
+        getReadTheme().setTheme(type);
+      });
+    });
+
+    // 绑定加入书架点击事件
+    document.querySelector(".book-shelf-not-in span").addEventListener("click", function (e) {
+      if (e.target.parentElement.className.indexOf("book-shelf-in") !== -1) {
+        return;
+      }
+      addToBookStore()
+              .then(function (data) {
+                Toast.loading(data.err_msg);
+                setTimeout(function () {
+                  Toast.hide();
+                }, 1500);
+              });
+    });
+
+    loadContent()
+            .then(function () {
+              getRecommends().then(createRecommonds);
+              document.querySelector("#root").style.display = "block";
+            });
+
+    initializeQrcode();
+
+    // 重新加载按钮的点击事件
+    document.querySelector('.real-btn').addEventListener('click', function () {
+      loadContent();
+      document.querySelector('.reload-read-container').style.display = 'none';
+    });
+
+
+    // 后退
+    document.querySelector(".back").addEventListener("click", function () {
+      window.history.go(-1);
+    });
+
+    // 去首页
+    document.querySelector(".to-home").addEventListener("click", function () {
+      window.location.href = "/front/#/index.html?" + obj2str(GetRequest());
+    });
+
+    // 去阅读历史
+    document.querySelector(".to-history").addEventListener("click", function () {
+      window.location.href = "/front/#/book-history.html?" + obj2str(GetRequest());
+    });
+
+    // 去充值
+    document.querySelector(".to-recharge").addEventListener("click", function () {
+      window.location.href = "/front/#/pay.html?" + obj2str(GetRequest());
+    });
+
+    // 去反馈
+    document.querySelector(".to-feedback").addEventListener("click", function () {
+      window.location.href = "/front/#/feedback-" + id + ".html?" + obj2str(GetRequest());
+    });
+
+    // 去投诉
+    document.querySelector('.to-complain').addEventListener('click', function () {
+      window.location.href = '/tousu';
+    });
+
+    // 去目录
+    document.querySelector(".menu-icon-wrapper").addEventListener("click", function () {
+      var _params = GetRequest();
+      delete _params["section"];
+      delete _params["novel_id"];
+      window.location.href = "/front/#/detail/chapter-" + id + ".html?" + obj2str(_params);
+    });
+
+    // 上一章点击
+    document.querySelector(".btn-prev").addEventListener("click", function () {
+      if (currentChapter === 1 || document.querySelector(".loader") !== null) {
+        return;
+      }
+
+      section--;
+      prev = "1";
+
+      var params = GetRequest();
+      params["section"] = section;
+      if (prev !== undefined) {
+        params["prev"] = prev;
+      }
+
+      window.history.pushState(null, null, window.location.origin + window.location.pathname + '#' + obj2str(params));
+      // window.location.hash = "#" + obj2str(params);
+      loadContent();
+    });
+
+    // 下一章点击
+    document.querySelector(".btn-next").addEventListener("click", function () {
+      if (currentChapter >= totalChapters || document.querySelector(".loader") !== null) {
+        return;
+      }
+
+      section++;
+      prev = undefined;
+
+      var params = GetRequest();
+      params["section"] = section;
+      if (prev !== undefined) {
+        params["prev"] = prev;
+      } else {
+        delete params["prev"];
+      }
+
+      window.history.pushState(null, null, window.location.origin + window.location.pathname + '#' + obj2str(params));
+      // window.location.hash = "#" + obj2str(params);
+      loadContent();
+    });
+  };
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?237385a5582957c1e54359d20f5a93a6";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+</body>
+</html>

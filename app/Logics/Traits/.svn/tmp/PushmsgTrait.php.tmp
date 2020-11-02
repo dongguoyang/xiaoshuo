@@ -1,0 +1,174 @@
+<?php
+namespace App\Logics\Traits;
+
+use App\Jobs\SendCustomerMsg;
+use App\Logics\Repositories\src\CustomerRepository;
+use App\Logics\Repositories\src\DomainRepository;
+use App\Logics\Repositories\src\PlatformRepository;
+use App\Logics\Repositories\src\PlatformWechatRepository;
+use App\Logics\Repositories\src\SignLogRepository;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Repositories\src\WechatConfigRepository;
+use App\Logics\Services\src\OperateService;
+
+trait PushmsgTrait
+{
+    /**
+     * 推送关注推送的二次模板消息
+     */
+    protected function pushSecondMsg($sess, $novel_id, $customer_id) {
+        $wechatConf = $this->getWechatConfigsInPushmsgTrait()->findByMap([
+            ['customer_id', $customer_id],
+            ['platform_wechat_id', $sess['platform_wechat_id']],
+        ], ['subscribe_msg_next']);
+        if (!$wechatConf) {
+            return false;
+        }
+        $config = json_decode($wechatConf['subscribe_msg_next'], 1);
+
+        // $url = '/front/#/detail/novel-258.html';
+        //$url = $host . route("novel.tosection", ['novel_id'=>$novel_id, 'section'=>$section, 'customer_id'=>$plat_wechat['customer_id'], 'do'=>'secondpush'], false);
+
+        $host = $this->getDomainsInPushmsgTrait()->randOne(5, $customer_id);
+        $str = "恭喜您；获得以下图书优先阅读权！\r\n\r\n
+👉<a href='" . $host . route("novel.tosection", ['novel_id'=>$novel_id, 'section'=>0, 'customer_id'=>$customer_id], false) ."'>点我继续上次阅读</a>\r\n\r\n
+【今日推荐】\r\n\r\n";
+        // 查询网站模板
+        $customer = $this->getCustomersInPushmsgTrait()->find($customer_id, ['web_tpl']);
+        $host = $host . '/'. $customer['web_tpl'] . '/#/detail/novel-';//258.html';
+        $str .="👉<a href='{$host}{$config['nid'][0]}.html?cid={$customer_id}'>{$config['title'][0]}</a>\r\n\r\n
+👉<a href='{$host}{$config['nid'][1]}.html?cid={$customer_id}'>{$config['title'][1]}</a>\r\n\r\n
+👉<a href='{$host}{$config['nid'][2]}.html?cid={$customer_id}'>{$config['title'][2]}</a>\r\n\r\n
+👉{$config['bottom'][0]}，<a href='{$config['bottom'][1]}'>{$config['bottom'][2]}</a>";
+
+
+        $content = [
+            'touser'    => $sess['openid'],
+            'msgtype'   => 'text',
+            'text'      => [
+                'content'   => $str,
+            ],
+        ];
+        try {
+            $this->SendCustomMsg($customer_id, $content, true);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+    /**
+     * 签到 关键字字段执行签到并回复签到成功
+     */
+    protected function signReply($message) {
+        $sess = $this->getUsersInPushmsgTrait()->findBy('openid', $message['FromUserName'], $this->getUsersInPushmsgTrait()->model->fields);
+        $info = $this->getSignLogsInPushmsgTrait()->LastSignInfo($sess['id']);
+        if ($info['signed']) {
+            return '今天您已签到成功！';
+        }
+        try {
+            $operateSer = new OperateService();
+            list($user, $sign) = $operateSer->InserSignData($info, $sess);
+            // return '您已成功签到，获得'.$sign['last_coin'].'书币！请明天继续签到！';
+            return null;
+        } catch (\Exception $e) {
+            return '签到失败，请稍后再试！';
+        }
+    }
+    /**
+     * 充值失败提醒
+     */
+    protected function RechargeMsg($user) {
+        $host = $this->getDomainsInPushmsgTrait()->randOne(2, $user['customer_id']);
+        if ($user['recharge_money']) {
+            // 充值失败提醒
+            $content = [
+                'touser'    => $user['openid'],
+                'msgtype'   => 'news',
+                'news'      => [
+                    'articles'  =>  [
+                        [
+                            'title'         => '>>> 首充失败了💔💔💔',
+                            'description'   => '亲，您刚刚提交的充值订单充值失败了，点我重新充值吧！',
+                            'url'           => $host . route('jumpto', ['route'=>'recharge', 'customer_id'=>$user['customer_id']], false),
+                            'picurl'        => 'https://novelsys.oss-cn-shenzhen.aliyuncs.com/coupon/images/49c27ed5be905cb2a2ac050ead023ec.png',
+                        ],
+                    ],
+                ],
+            ];
+<<<<<<< .mine
+            SendCustomerMsg::dispatch($user['customer_id'], $content)->delay(10);
+=======
+            $this->SendCustomMsg($user['customer_id'], $content, true);
+            SendCustomerMsg::dispatch($user['customer_id'], $content)->delay(1800);
+>>>>>>> .r738
+        } else {
+            // 首充优惠提醒
+            $content = [
+                'touser'    => $user['openid'],
+                'msgtype'   => 'news',
+                'news'      => [
+                    'articles'  =>  [
+                        [
+                            'title'         => '>>> 首充优惠活动🎉🎉🎉',
+                            'description'   => '亲，首次充值仅需9.9元，还送您900个书币，点击前往！',
+                            'url'           => $host . route('jumpto', ['route'=>'first_recharge', 'customer_id'=>$user['customer_id']], false),
+                            'picurl'        => 'https://novelsys.oss-cn-shenzhen.aliyuncs.com/coupon/images/f4abd987efd929090b69a0414c8f077.png',
+                        ],
+                    ],
+                ],
+            ];
+<<<<<<< .mine
+            SendCustomerMsg::dispatch($user['customer_id'], $content)->delay(10);
+=======
+            $this->SendCustomMsg($user['customer_id'], $content, true);
+            SendCustomerMsg::dispatch($user['customer_id'], $content)->delay(1800);
+>>>>>>> .r738
+        }
+    }
+
+
+
+
+    public function getSignLogsInPushmsgTrait() {
+        if (!isset($this->signLogs) || !$this->signLogs) {
+            $this->signLogs = new SignLogRepository();
+        }
+        return $this->signLogs;
+    }
+    public function getPlatformWechatsInPushmsgTrait() {
+        if (!isset($this->platformWechats) || !$this->platformWechats) {
+            $this->platformWechats = new PlatformWechatRepository();
+        }
+        return $this->platformWechats;
+    }
+    public function getPlatformsInPushmsgTrait() {
+        if (!isset($this->platforms) || !$this->platforms) {
+            $this->platforms = new PlatformRepository();
+        }
+        return $this->platforms;
+    }
+    public function getUsersInPushmsgTrait() {
+        if (!isset($this->users) || !$this->users) {
+            $this->users = new UserRepository();
+        }
+        return $this->users;
+    }
+    public function getWechatConfigsInPushmsgTrait() {
+        if (!isset($this->wechatConfigs) || !$this->wechatConfigs) {
+            $this->wechatConfigs = new WechatConfigRepository();
+        }
+        return $this->wechatConfigs;
+    }
+    public function getDomainsInPushmsgTrait() {
+        if (!isset($this->domains) || !$this->domains) {
+            $this->domains = new DomainRepository();
+        }
+        return $this->domains;
+    }
+    public function getCustomersInPushmsgTrait() {
+        if (!isset($this->customers) || !$this->customers) {
+            $this->customers = new CustomerRepository();
+        }
+        return $this->customers;
+    }
+}

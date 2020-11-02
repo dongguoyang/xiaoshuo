@@ -1,0 +1,464 @@
+<?php
+
+namespace App\Logics\Services\src;
+
+use App\Logics\Repositories\src\DomainRepository;
+use App\Logics\Repositories\src\NovelRepository;
+use App\Logics\Repositories\src\TestRepository;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Repositories\src\WechatConfigRepository;
+use App\Logics\Repositories\src\WechatMsgReplyRepository;
+use App\Logics\Repositories\src\WechatQrcodeRepository;
+use App\Logics\Repositories\src\WechatRepository;
+use App\Logics\Services\Service;
+use App\Logics\Traits\OfficialAccountTrait;
+use App\Logics\Traits\PushmsgTrait;
+use EasyWeChat\Factory;
+use EasyWeChat\Kernel\Encryptor;
+use EasyWeChat\Kernel\Messages\News;
+use EasyWeChat\Kernel\Messages\NewsItem;
+
+class OfficialAccountService extends Service {
+    use PushmsgTrait, OfficialAccountTrait;
+	protected $officialAccount; // easy wechat 的 officialAccount 对象
+	protected $Encryptor;
+
+	protected $token = 'zmr2token';
+	protected $aes_key = 'nafVTCVpgK1NDz96UyL4HZpRsyzoe6TBgdQLByhg88b';
+
+    protected $wechats;
+    protected $tests;
+    protected $wechatMsgReplies;
+    protected $wechatConfigs;
+    protected $novels;
+    protected $users;
+    protected $domains;
+    protected $wechatQrcodes;
+
+	public function Repositories() {
+		return [
+			'wechats'           => WechatRepository::class,
+			'tests'             => TestRepository::class,
+            'wechatMsgReplies'  => WechatMsgReplyRepository::class,
+            'wechatConfigs'     => WechatConfigRepository::class,
+            'novels'            => NovelRepository::class,
+            'users'             => UserRepository::class,
+            'domains'           => DomainRepository::class,
+            'wechatQrcodes'     => WechatQrcodeRepository::class,
+		];
+	}
+    /**
+     * 获取开放平台信息
+     */
+    private function setOfficialAccount($appid = '') {
+        $appid = $appid ?: request()->input('appid');
+        $wechat = $this->wechats->findBy('appid', $appid, $this->wechats->model->fields);
+
+        if (!$wechat['token'] || $wechat['token_out'] < time()) {
+            $wechat = $this->updateWechatAccessToken($wechat);
+        }
+
+        $config = [
+            'app_id' => $wechat['appid'],
+            'secret' => $wechat['appsecret'],
+
+            'token'         => $wechat['service_token'],
+            'aes_key'       => $wechat['service_aes_key'],// EncodingAESKey，兼容与安全模式下请一定要填写！！！
+
+            'response_type' => 'array',
+        ];
+
+        $this->officialAccount = Factory::officialAccount($config);
+    }
+
+	/**
+	 * 公众号消息与事件接收
+	 * @param Request $request
+	 * @return \Illuminate\Http\JsonResponse|mixed|\Symfony\Component\HttpFoundation\Response
+	 */
+	public function wechatEvent($request) {
+	    if (isset($request->echostr)) {
+            // 服务器配置验证
+	        if ($this->checkSignature()) {
+	            exit($request->echostr);
+            }
+        }
+
+	    // 正常的业务逻辑
+		$xml = file_get_contents('php://input');
+		$input = request()->all();
+		$this->tests->create(['type' => 'wechatEvent.xml', 'content' => $xml]);
+		$this->tests->create(['type' => 'wechatEvent.input', 'content' => http_build_query($input)]);
+
+		$this->setOfficialAccount($input['appid']);
+
+		/**
+		 * 简单的处理 文本消息和事件
+		 */
+        $this->officialAccount->server->push(function ($message) {
+            switch ($message['MsgType']) {
+                case 'event':
+                    // return '收到事件消息';// 处理事件消息
+                    return $this->operateEvent($message);
+                    break;
+                case 'text':
+                    // return '收到文字消息';// 处理文本消息
+                    return $this->operateText($message);
+                    break;
+                case 'image':
+                    // return '收到图片消息';// 处理图片消息
+                    return $this->operateImage($message);
+                    break;
+                case 'voice':
+                    // return '收到语音消息';处理语音消息
+                    return $this->operateDefault($message);
+                    break;
+                case 'video':
+                    // return '收到视频消息';
+                    return $this->operateDefault($message);
+                    break;
+                case 'location':
+                    // return '收到坐标消息';
+                    return $this->operateDefault($message);
+                    break;
+                case 'link':
+                    // return '收到链接消息';
+                    return $this->operateDefault($message);
+                    break;
+                case 'file':
+                    // return '收到文件消息';
+                    return $this->operateDefault($message);
+                // ... 其它消息
+                default:
+                    // 接收 服务器验证
+                    break;
+            }
+        });
+		// $server->push(TextMessageHandler::class, Message::TEXT);
+		// $server->push(EventMessageHandler::class, Message::EVENT);
+
+		$response = $this->officialAccount->server->serve();
+		return $response;
+	}
+    /**
+     * 事件消息处理器
+     * @param array $message
+     */
+    private function operateEvent($message) {
+        // 事件消息处理器
+        // 修改用户的关注与否状态
+        $appid = request()->input('appid');
+
+        // 记录最近有互动的用户
+        $wechat = $this->wechats->getWechatForAppid($appid); // 获取公众号信息
+
+        // 只处理关注事件
+        switch ($message['Event']) {
+            case 'unsubscribe':
+                // 取消关注事件
+                $this->users->SubscribeEvent($wechat['id'], $message['FromUserName'], $message['Event']);// 修改用户的关注与否状态
+                return '取消关注成功！';
+                break;
+            case 'subscribe':
+                // 关注事件
+                $this->users->SubscribeEvent($wechat['id'], $message['FromUserName'], $message['Event']);// 修改用户的关注与否状态
+                if (isset($message['EventKey'])) {
+                    // 扫描的带参数二维码
+                    $scene = substr($message['EventKey'], 8);
+                    if ($scene) {
+                        // 带参数二维码关注
+                        $scene = Array2String($scene);
+                        $novel_id   = isset($scene['n']) ? $scene['n'] : 0;
+                        $section    = isset($scene['s']) ? $scene['s'] : 0;
+                        if (isset($scene['id']) && $scene['id']) {
+                            $this->wechatQrcodes->IncColumns($scene['id'], ['scan_num'=>1, 'sub_num'=>1]);
+                            // 直接的带参二维码
+                            $rel = $this->paramsQrcode($wechat, $message, $scene);
+                        } else if ($novel_id && $section) {
+                            $rel = $this->qrcodeSend($wechat, $message, $novel_id, $section);
+                        } else {
+                            if (isset($scene['sc']) && $scene['sc']=='searchsub') {
+                                $rel = $this->qrcodeSend($wechat, $message, $scene['sc']);
+                            } else {
+                                $rel = $this->qrcodeSend($wechat, $message);
+                            }
+                        }
+                    } else {
+                        // 一般二维码关注
+                        $rel = $this->qrcodeSend($wechat, $message);
+                    }
+                } else {
+                    // 一般的二维码关注
+                    $rel = $this->qrcodeSend($wechat, $message);
+                }
+                break;
+            case 'SCAN':
+                // 带参数二维码扫码事件
+                if (isset($message['EventKey'])) {
+                    // 扫描的带参数二维码
+                    $scene = $message['EventKey']; // 扫码事件没有前面的8个字符；不用截取字符串
+                    if ($scene) {
+                        // 带参数二维码关注
+                        $scene = Array2String($scene);
+                        if (isset($scene['id']) && $scene['id']) {
+                            $this->wechatQrcodes->IncColumns($scene['id'], ['scan_num'=>1]);
+                            // 直接的带参二维码
+                            $rel = $this->paramsQrcode($wechat, $message, $scene);
+                            break;
+                        }
+                    }
+                }
+                $rel = $this->qrcodeSend($wechat, $message);
+                break;
+            /*case 'CLICK':// 点击菜单拉取消息时的事件推送
+            case 'VIEW':// 点击菜单跳转链接时的事件推送
+                // 记录最近有互动的用户
+                $this->users->NoteInteractInfo($plat_wechat, $message['FromUserName']);// 执行记录
+                break;*/
+            default:
+                $rel = null;
+                break;
+        }
+        $this->users->NoteInteractInfo($wechat, $message['FromUserName']);// 执行互动记录
+        return $rel;
+    }
+    // 自定义参数生成的带参二维码
+    private function paramsQrcode($plat_wechat, $message, $scene) {
+        $novels = $this->novels->model->where('status', 2)->orderBy('week_read_num', 'desc')->limit(4)->select(['id', 'title', 'img'])->get();
+        $host = $this->domains->randOne(1, $plat_wechat['customer_id']); // 获取内推入口域名
+        $novel = ['title' => '女婿的人生', 'id'=>186807, 'section'=>3];
+        if (isset($scene['n'])) {
+            $novel = $this->novels->NovelInfo($scene['n']);
+            $novel['section'] = isset($scene['s']) ? $scene['s'] : 3;
+        }
+        $str = "欢迎！您上次阅读的小说在《{$novel['title']}》：\r\n\r\n";
+        $url = $host . route("jumpto", ['route'=>'section', 'novel_id'=>$novel['id'], 'section_num'=>$novel['section'], 'section'=>$novel['section'], 'customer_id'=>$plat_wechat['customer_id'], 'otherdo'=>'secondpush', 'dtype'=>2, 'uid'=>-1, 'tologin'=>1, 'wq'=>$scene['id']], false);
+        $str .= "👉 <a href='{$url}'>点击继续阅读章节</a>\r\n\r\n";
+        $str .= "👇 为您推荐\r\n\r\n";
+        foreach ($novels as $novel) {
+            $url = $host . route("jumpto", ['route'=>'novel', 'novel_id'=>$novel['id'], 'customer_id'=>$plat_wechat['customer_id'], 'dtype'=>2, 'uid'=>-1, 'wq'=>$scene['id']], false);
+            $str .= "📖 <a href='{$url}'>《{$novel['title']}》</a> 👈 \r\n\r\n";
+        }
+        $str .= "为方便下次阅读，请 <a href='{$host}/img/wechat.totop.png'>置顶公众号</a>";
+        return $str;
+    }
+    /**
+     * 二维码关注事件回复
+     * @param array $plat_wechat
+     * @param array $message
+     * @param int $novel_id
+     * @param int $section_id
+     */
+    private function qrcodeSend($plat_wechat, $message, $novel_id=0, $section=0) {
+        // if (!$novel_id) { return null; }
+
+        $wechat_config = $this->wechatConfigs->FindByCustomer2PlatWechat($plat_wechat['customer_id'], $plat_wechat['id']); // 获取公众号配置
+        $host = $this->domains->randOne(1, $wechat_config['customer_id']); // 获取内推入口域名
+        /*// 推送指定的章节信息
+        $url = $host . route("jumpto", ['route'=>'section', 'section_num'=>$section, 'novel_id'=>$novel_id, 'section'=>$section, 'customer_id'=>$plat_wechat['customer_id'], 'otherdo'=>'secondpush', 'dtype'=>2], false);
+        if (!$novel_id) {
+            //$url = $host . route('novel.toindex', ['cid'=>$plat_wechat['customer_id'], 'dtype'=>5], false);
+            $url = $host . route('jumpto', ['route'=>'index', 'cid'=>$plat_wechat['customer_id'], 'dtype'=>2], false);
+        }*/
+        $user = $this->users->FindByOpenid($message['FromUserName'], ['name', 'id', 'first_account']);
+        if ($novel_id == 'searchsub' &&
+            isset($wechat_config['search_sub']['switch']) &&
+            intval($wechat_config['search_sub']['switch'])==1) {
+            // 直接搜索公众号进行操作的关注
+            $uid = $user ? ($user['first_account'] > 0 ? $user['first_account'] : $user['id']) : -1;
+            return $this->noUserSearchSubPush($host, $plat_wechat, $wechat_config['search_sub'], $uid);
+        }
+
+        if (!$user) {
+            if (isset($wechat_config['search_sub']['switch']) && intval($wechat_config['search_sub']['switch'])==1) {
+                return $this->noUserSearchSubPush($host, $plat_wechat, $wechat_config['search_sub']);
+            } else {
+                return $this->noUserPush($host, $plat_wechat, 5);
+            }
+        } else {
+            // 这样是方便获取最近阅读记录
+            $r_params = ['route'=>'section', 'section_num'=>$section, 'novel_id'=>$novel_id, 'section'=>$section, 'customer_id'=>$plat_wechat['customer_id'], 'otherdo'=>'secondpush', 'dtype'=>2, 'uid'=>$user['id'], 'tologin'=>1];
+            if ($novel_id > 0) {
+                $r_params['nsa1'] = 1; // 外推进入需增加一章阅读
+            }
+            $url = $host . route("jumpto", $r_params, false);
+        }
+        switch ($wechat_config['subscribe_msg']) {
+            case 1:
+                /*if (!$novel_id) {
+                    return $this->noUserPush($host, $plat_wechat, 5); // 直接关注去外推域名
+                }*/
+                $title = '';
+                if ($novel_id) {
+                    $novel = $this->novels->NovelInfo($novel_id);
+                    if (isset($novel['title'])) $title = "《{$novel['title']}》";
+                }
+                $str = "你好，欢迎关注 <a href='{$url}'>{$plat_wechat['name']}</a>！ \r\n\r\n <a href='{$url}'>请点击我继续阅读{$title}</a>";
+                return $str;
+            case 2:
+                $user = $this->users->findBy('openid', $message['FromUserName'], ['name']);
+                $str = "亲爱的{$user['name']}，欢迎关注 <a href='{$url}'>{$plat_wechat['name']}</a>！ \r\n\r\n <a href='{$url}'> 请点击我继续阅读刚才的小说吧！</a>";
+                return $str;
+            case 3:
+                $user = $this->users->findBy('openid', $message['FromUserName'], ['name']);
+                $str = "亲爱的{$user['name']}，欢迎您~ <a href='{$url}'>点击我继续阅读刚才的小说吧！</a>";
+                return $str;
+            case 4:
+                // 图文消息回复
+                $subscribe_content = json_decode($wechat_config['subscribe_content'], 1);
+                if ($subscribe_content) {
+                    $novel['title'] = $subscribe_content['title'];
+                    $novel['desc']  = $subscribe_content['desc'];
+                    $novel['img']   = $subscribe_content['img'];
+                } elseif ($novel_id) {
+                    $novel = $this->novels->NovelInfo($novel_id);
+                } else {
+                    $novel['title'] = $plat_wechat['name'];
+                    $novel['desc']  = '欢迎您的到来，关注我可以防止迷路哦，后续观看更方便！';
+                    $novel['img']   = 'http://dev.zmr029.com/img/zmr.logo.png';
+                }
+                $item = [
+                    new NewsItem([
+                        'title'         => $novel['title'],
+                        'description'   => $novel['desc'],
+                        'url'           => $url,
+                        'image'         => $novel['img'],
+                    ]),
+                ];
+                return new News($item);
+            // case 5:
+            default:
+                $str = "<a href='{$url}'>~点击继续阅读！</a>";
+                return $str;
+        }
+    }
+    /**
+     * 没有设置关键字的默认回复
+     * @param string $host
+     * @param array $plat_wechat 公众号信息
+     * @param int $dtype 域名类型
+     */
+    private function noUserPush($host, $plat_wechat, $dtype=2, $uid = -1) {
+        $novels = $this->novels->model->where('status', 2)->orderBy('week_read_num', 'desc')->limit(4)->select(['id', 'title', 'img'])->get();
+        $str = "欢迎！您上次阅读的小说在《女婿的人生》：\r\n\r\n";
+        $url = $host . route("jumpto", ['route'=>'section', 'novel_id'=>186807, 'section_num'=>3, 'section'=>3, 'customer_id'=>$plat_wechat['customer_id'], 'dtype'=>2, 'uid'=>$uid], false);
+        $str .= "👉 <a href='{$url}'>点击继续阅读章节</a>\r\n\r\n";
+        $str .= "👇 为您推荐\r\n\r\n";
+        foreach ($novels as $novel) {
+            $url = $host . route("jumpto", ['route'=>'novel', 'novel_id'=>$novel['id'], 'customer_id'=>$plat_wechat['customer_id'], 'dtype'=>2, 'uid'=>$uid], false);
+            $str .= "📖 <a href='{$url}'>《{$novel['title']}》</a> 👈 \r\n\r\n";
+        }
+        $str .= "为方便下次阅读，请 <a href='{$host}/img/wechat.totop.png'>置顶公众号</a>";
+        /*$novels = $this->novels->model->where('status', '>', 0)->orderBy('week_read_num', 'desc')->limit(5)->select(['id', 'title', 'img'])->get();
+        $str = "您好，{$plat_wechat['name']}为您推荐：\r\n\r\n";
+        foreach ($novels as $novel) {
+            $url = $host . route("jumpto", ['route'=>'novel', 'novel_id'=>$novel['id'], 'customer_id'=>$plat_wechat['customer_id'], 'dtype'=>$dtype, 'uid'=>$uid], false);
+            $str .= "👉<a href='{$url}'>{$novel['title']}</a> \r\n\r\n";
+        }
+        $str .= '点击上方蓝色字阅读 '. implode('', $this->emojiArr(3));*/
+        return $str;
+    }
+    /**
+     * 没有用户；直接搜索的关注
+     * @param string $host
+     * @param array $plat_wechat 公众号信息
+     * @param int $dtype 域名类型
+     */
+    private function noUserSearchSubPush($host, $plat_wechat, $conf, $uid = -1) {
+        $novels = $this->novels->model->where('status', 2)->orderBy('week_read_num', 'desc')->limit(4)->select(['id', 'title', 'img'])->get();
+        $str = "欢迎！您上次阅读的小说是：{$conf['title']}\r\n\r\n";
+        $str .= "👉 <a href='{$conf['link']}'>点击继续阅读章节</a>\r\n\r\n";
+        $str .= "👇 为您推荐\r\n\r\n";
+        foreach ($novels as $novel) {
+            $url = $host . route("jumpto", ['route'=>'novel', 'novel_id'=>$novel['id'], 'customer_id'=>$plat_wechat['customer_id'], 'dtype'=>2, 'uid'=>$uid], false);
+            $str .= "📖 <a href='{$url}'>《{$novel['title']}》</a> 👈 \r\n\r\n";
+        }
+        $str .= "为方便下次阅读，请 <a href='{$host}/img/wechat.totop.png'>置顶公众号</a>";
+        return $str;
+    }
+    /**
+     * 文本消息处理器
+     * @param array $message
+     */
+    private function operateText($message) {
+        // 文本消息处理器
+        $appid = request()->input('appid');
+        if ($message['Content'] == '签到') {
+            $msg = $this->signReply($message); // 签到返还
+            if ($msg) {
+                return $msg;
+            }
+        }
+        $keyword_info = $this->wechatMsgReplies->KeyWordMsg($appid, $message['Content']);
+        if (!$keyword_info) {
+            // throw new \Exception('没有查询到对应的关键字！', 2000);
+            // 记录最近有互动的用户
+            $wechat = $this->wechats->getWechatForAppid($appid); // 获取公众号信息
+            $wechat_config = $this->wechatConfigs->FindByCustomer2PlatWechat($wechat['customer_id'], $wechat['id']); // 获取公众号配置
+
+            $host = $this->domains->randOne(1, $wechat_config['customer_id']); // 获取内推入口域名
+            // 查询用户信息
+            $user = $this->users->FindByOpenid($message['FromUserName'], ['name', 'id', 'first_account']);
+            $uid = $user ? ($user['first_account'] > 0 ? $user['first_account'] : $user['id']) : -1;
+            return $this->noUserPush($host, $wechat, 2, $uid);
+        }
+
+        $content = $keyword_info['reply_content'];
+        if (IsJson($content)) {
+            // 是回复图文消息
+            $content = json_decode($content, 1);
+            $item = [
+                new NewsItem([
+                    'title'         => $content['title'],
+                    'description'   => $content['desc'],
+                    'url'           => $content['url'],
+                    'image'         => $content['img'],
+                ]),
+            ];
+            $content = new News($item);
+        }
+
+        return $content;
+    }
+    /**
+     * 图片消息处理器
+     * @param array $message
+     */
+    private function operateImage($message) {
+        // 文本消息处理器
+    }
+    /**
+     * 默认消息处理
+     * @param array $message
+     */
+    private function operateDefault($message) {
+        // 事件默认处理器
+    }
+    /**
+     * 服务器配置验证签名
+     */
+    private function checkSignature()
+    {
+        $signature = $_GET["signature"];
+        $timestamp = $_GET["timestamp"];
+        $nonce = $_GET["nonce"];
+        $appid = $_GET["appid"];
+
+        $wechat = $this->wechats->findBy('appid', $appid, ['id', 'appid', 'service_token']);//->first()->value('appid');
+        if (!$wechat) {
+            return false;
+        }
+        $token = $wechat['service_token'];
+
+        $tmpArr = array($token, $timestamp, $nonce);
+        sort($tmpArr, SORT_STRING);
+        $tmpStr = implode( $tmpArr );
+        $tmpStr = sha1( $tmpStr );
+
+        if( $tmpStr == $signature ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+}

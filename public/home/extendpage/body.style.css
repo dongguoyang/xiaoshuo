@@ -1,0 +1,109 @@
+.bodyhide, .body3-titlebox{display: none;}
+
+.body1 .chapter .title-unit{padding:.4em .1em;}
+.body1 .title-box {text-align: center; }
+.body1 .title-box .chapter-title{text-align: center;margin: 0;padding: 0; font-size: 18px; color: rgb(6,6,6);}
+.body1 .body1-sep-line{border-bottom: 1px solid rgba(211, 163, 180, 0.470588);margin-bottom: 1em;}
+.body1 .body1-title-boder, .body1 .body1-sep-line{display: block;}
+.body1 .chapter-content{font-size: 18px;}
+
+.body2>section{border:0;width:96%;margin:1em auto 2em}
+.body2>section>section{width:100%;height:auto;box-shadow:0 0 .8em #a5a5a5;overflow:hidden;box-sizing:border-box;padding:1em}
+.body2 .chapter .title-unit{display:inline-block;background:rgb(160, 217, 229);color:rgb(29, 92, 105);text-align:center;padding:.1em .1em 0}
+.body2 .title-bg{width:90%;height:1px;border-top:.3em solid rgb(160, 217, 229);-webkit-transform:rotate(-2deg)!important;transform:rotate(-2deg);margin:0 auto;margin-top:-0.2em}
+.body2 .title-box{color:#fff;padding:.5em .8em}
+.body2 .title-box .chapter-title{margin:0;}
+.body2 .chapter-content{width:auto;height:auto;margin:0 auto;overflow:hidden;border-top:.1em dashed rgb(160, 217, 229);padding:2em .2em 1em;font-size:1em;line-height:1.7em;margin-top:-1em}
+
+.body3 .chapter{margin-top: 10px;}
+.body3 .chapter .title-unit{text-align: center;}
+.body3 .chapter .title-box{text-align: center;display: inline-block; box-sizing: border-box; background-color: rgb(254, 254, 254);}
+.body3 .chapter .title-box>.chapter-title{display: none;}
+.body3 .chapter-content{border: 2px solid rgb(255, 129, 36); padding: 30px 15px 15px; margin-top: -16px; box-sizing: border-box;}
+.body3 .body3-titlebox{display: inline-block;}
+.body3 .chapter-title{display: none;}
+
+.body4>section{border:0;width:96%;margin:1em auto 2em}
+.body4>section>section{width:100%;height:auto;box-shadow:0 0 .8em #a5a5a5;overflow:hidden;box-sizing:border-box;padding:1em}
+.body4 .chapter .title-unit{display:inline-block;background:#ef303f;text-align:center;padding:.1em .1em 0}
+.body4 .title-bg{width:90%;height:1px;border-top:.3em solid #ef303f;-webkit-transform:rotate(-2deg)!important;transform:rotate(-2deg);margin:0 auto;margin-top:-0.2em}
+.body4 .title-box{color:#fff;padding:.5em .8em}
+.body4 .title-box .chapter-title{margin:0;}
+.body4 .chapter-content{width:auto;height:auto;margin:0 auto;overflow:hidden;border-top:.1em dashed #ef303f;padding:2em .2em 1em;font-size:1em;line-height:1.7em;margin-top:-1em}
+
+.body5 .title-box {text-align: left;padding: 20px 10px 5px 10px; }
+.body5 .title-box .chapter-title{margin:0;margin-top:12px;margin-bottom: 10px; display: inline-block;padding-right: 20px; padding-left: 20px; height: 40px; color: rgb(255, 255, 255); line-height: 40px; background-color: rgb(249, 110, 87);}
+.body5 .title-box .chapter-title-right{box-sizing: border-box !important; display: inline-block;height:40px; vertical-align: top; border-left-width: 10px; border-left-style: solid; border-left-color: rgb(249, 110, 87); border-top-width: 20px !important; border-top-style: solid !important; border-top-color: transparent !important; border-bottom-width: 20px !important; border-bottom-style: solid !important; border-bottom-color: transparent !important;margin-top: 12px;}
+.body5 .body5-content-border, .body5 .body5-title-border{display: block;}
+.body5 .chapter-content .content{margin: -0.8em 0.1em -0.8em 0.2em; padding: 0.8em; border: 1px solid rgb(249, 110, 87); border-radius: 0.3em; box-sizing: border-box;}
+
+.body6 .title-box {text-align: left;padding: 10px 0;position: relative; margin-top: 10px;}
+.body6 .title-box .chapter-title-num{width: 32px; height: 32px; border-radius: 50%; text-align: center; font-size: 18px; line-height: 32px; color: rgb(61, 167, 66); border: 1px solid rgb(61, 167, 66); transform: rotate(0deg); background: rgb(255, 255, 255);position: absolute;top: 22px;display: block;}
+.body6 .title-box .chapter-title{margin:12px 0 0 1.2em;margin-bottom: 10px; padding-right: 20px; padding-left: 20px; height: 32px; color: rgb(255, 255, 255); line-height: 32px; background-color: rgb(61, 167, 66);}
+.body6 .body6-content-border, .body6 .body6-title-border{display: block;}
+.body6 .chapter-content .content{margin: -1.8em 0em -0.8em 1.2em; padding: 0.8em; border: 1px solid rgb(61, 167, 66); border-radius: 0.3em; box-sizing: border-box;}
+
+.body7 .title-box {text-align: left;padding: 10px 0;position: relative;margin-top: 15px; }
+.body7 .title-box .chapter-title-shadow{box-sizing: border-box; position: absolute; margin-top: -.8em; text-align: start; vertical-align: middle; width: 2.1em !important; height: auto !important; visibility: visible !important;display: block;}
+.body7 .title-box .chapter-title-num{width: 1.5em; height: 3em; line-height: 3em; border-top-right-radius: 2em; border-bottom-right-radius: 2em; background-color: rgb(253, 190, 173); text-align: center; color: rgb(255, 255, 255); font-size: 18px; box-sizing: border-box;display: block;position: absolute;}
+.body7 .title-box .chapter-title{margin:12px 0 0 2.2em;padding-right: 20px; padding-left: 20px; height: 40px; color: #595959; line-height: 40px;font-weight: bold;display: inline-block;}
+.body7 .chapter-content{padding: 1em; margin:0 auto 10px auto; background: #fff; -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 60px rgba(0, 0, 0, 0.1) inset; -moz-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;}
+
+.body8 .title-box {text-align: center;padding: 10px; margin-top: 10px;}
+.body8 .title-box .chapter-title{margin:0;margin-top:12px;margin-bottom: 10px; display: inline-block;padding-right: 20px; padding-left: 20px; height: 40px; color: rgb(255, 255, 255); line-height: 40px; background-color: rgb(190, 240, 131);color: rgb(0, 0, 0);}
+.body8 .body8-content-border{display: block;}
+.body8 .chapter-content{background-color: rgb(247, 247, 248);}
+
+.body9 .chapter .title-unit{text-align:center;margin: 40px 20px 20px 20px;}
+.body9 .title-box {padding: 2px 0; max-width: 100%; box-sizing: border-box; border-left: 5px solid rgb(218, 203, 158); border-right: 5px solid rgb(218, 203, 158); border-color: rgb(218, 203, 158); color: rgb(255, 255, 255); overflow-wrap: break-word !important; display: inline-block;border-radius: 2px;}
+.body9 .title-box .chapter-title{margin:0;display: inline-block;padding: 0px 10px; height: 32px; color: rgb(255, 255, 255); line-height: 32px; background-color: rgb(249, 110, 87);color: #fff;}
+
+.body10 .title-box {text-align: left;padding: 10px; padding-top: 0;}
+.body10 .chapter{clear: both; border-radius: 5px; border: 1px solid rgb(224, 224, 224);margin-top: 30px;}
+.body10 .title-box .chapter-title{margin-top: -1px; margin-bottom: 0px; margin-left: -10px; padding: 3px 15px 4px; line-height: 40px; border-radius:5px 0px; display: inline-block; color: rgb(255, 255, 255); background-color: rgb(92, 184, 92);}
+.body10 .chapter-content{margin: -0.8em 0.1em -0.8em 0.2em; padding: 0.8em;color:rgb(92, 184, 92);font-size: 18px;}
+
+.body11 .title-box {text-align: left;padding: 10px 0;position: relative;margin-top: 10px; }
+.body11 .title-box .chapter-title{color: rgb(255, 41, 65);font-size:18px;font-weight: bold;}
+.body11 .chapter-content{font-size: 18px;}
+
+.body12 .title-box {text-align: left;padding: 10px; padding-top: 0;}
+.body12 .chapter{clear: both; border: 1px solid rgb(224, 224, 224);margin-top: 30px;}
+.body12 .title-box .chapter-title{margin-bottom: 0px; margin-left: -10px;margin-top: 20px; display: inline-block; border-left: 5px solid red;padding-left: 20px;font-size: 18px;font-weight: bold;}
+.body12 .chapter-content{margin: -0.8em 0.1em -0.8em 0.2em; padding: 0.8em;font-size: 18px;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#editor-bar .dropdown-menu {
+    height: auto;
+    max-height: 400px;
+    overflow-x: hidden;
+}
+
+.searchbar {
+    padding: 3px 20px;
+}
+
+.searchbar input {
+    display: block;
+    width: 200px;
+    padding: 0 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+#wx-article-qrcode{margin-top: 15px;}

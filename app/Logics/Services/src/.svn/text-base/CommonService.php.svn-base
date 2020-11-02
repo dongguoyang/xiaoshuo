@@ -1,0 +1,352 @@
+<?php
+
+namespace App\Logics\Services\src;
+
+use App\Logics\Repositories\src\BookStoreRepository;
+use App\Logics\Repositories\src\CoinLogRepository;
+use App\Logics\Repositories\src\CommentRepository;
+use App\Logics\Repositories\src\CommonSetRepository;
+use App\Logics\Repositories\src\CommonTextRepository;
+use App\Logics\Repositories\src\CouponLogRepository;
+use App\Logics\Repositories\src\CouponRepository;
+use App\Logics\Repositories\src\CustomerRepository;
+use App\Logics\Repositories\src\DomainRepository;
+use App\Logics\Repositories\src\GoodsRepository;
+use App\Logics\Repositories\src\NovelRepository;
+use App\Logics\Repositories\src\NovelSectionRepository;
+use App\Logics\Repositories\src\PlatformWechatRepository;
+use App\Logics\Repositories\src\PrizeLogRepository;
+use App\Logics\Repositories\src\PrizeRepository;
+use App\Logics\Repositories\src\ReadLogRepository;
+use App\Logics\Repositories\src\RechargeLogRepository;
+use App\Logics\Repositories\src\RewardLogRepository;
+use App\Logics\Repositories\src\SignLogRepository;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Repositories\src\WechatQrcodeRepository;
+use App\Logics\Repositories\src\WechatRepository;
+use App\Logics\Services\Service;
+use App\Logics\Traits\OfficialAccountTrait;
+use App\Logics\Traits\PushmsgTrait;
+use App\Logics\Traits\WechatTrait;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+
+class CommonService extends Service {
+    use OfficialAccountTrait, PushmsgTrait;
+
+    protected $commonSets;
+    protected $commonTexts;
+    protected $platformWechats;
+    protected $wechats;
+    protected $customers;
+    protected $domains;
+    protected $readLogs;
+    protected $users;
+    protected $wechatQrcodes;
+
+	public function Repositories() {
+		return [
+            'domains'       => DomainRepository::class,
+            'customers'     => CustomerRepository::class,
+            'commonSets'    => CommonSetRepository::class,
+            'commonTexts'   => CommonTextRepository::class,
+            'wechats'       => WechatRepository::class,
+            'platformWechats'   => PlatformWechatRepository::class,
+            'readLogs'      => ReadLogRepository::class,
+            'users'         => UserRepository::class,
+            'wechatQrcodes' => WechatQrcodeRepository::class,
+		];
+	}
+    /**
+     * 获取公共配置
+     */
+    public function CommonSets() {
+        $type = request()->input('type');
+        $name = request()->input('name');
+        if (!$type) {
+            throw new \Exception('参数错误！', 2000);
+        }
+        $data = $this->commonSets->values($type, $name);
+
+        return $this->result($data);
+    }
+    /**
+     * 获取公共长文本配置
+     */
+    public function CommonTexts() {
+        $id = request()->input('id');
+        if ($id) {
+            $data = $this->commonTexts->FindById($id);
+        } else {
+            $type = request()->input('type');
+            $name = request()->input('name');
+            if (!$type || !$name) {
+                throw new \Exception('参数错误！', 2000);
+            }
+            $data = $this->commonTexts->FindByTypeName($type, $name);
+        }
+
+        return $this->result($data);
+    }
+    /**
+     * 获取带参数的二维码
+     */
+    public function ProductQRCode() {
+        $novel_id = request()->input('novel_id');
+        $section = request()->input('section', 1);
+        if (!$novel_id || !$section) {
+            throw new \Exception('参数错误！', 2000);
+        }
+        $sess = $this->loginGetSession(true);
+        if (isset($sess['view_cid']) && $sess['view_cid']) {
+            $customer_id = $sess['view_cid'];
+        } elseif (isset($sess['customer_id']) && $sess['customer_id']) {
+            $customer_id = $sess['customer_id'];
+        } else {
+            $customer_id = request()->input('customer_id');
+            if (!$customer_id && $wechat = $this->wechats->findByMap([['status', 1]], ['customer_id'])) {
+                $customer_id = $wechat['customer_id'];
+            }
+        }
+
+        $key = config('app.name') . 'outqrcode-'.$customer_id.'-'.$novel_id.'-'.$section.'-'.$sess['id'];
+        if (Cache::has($key)) {
+            $qrcode = Cache::get($key);
+        } else {
+            $qrcode = $this->ProductParamsQRCode($customer_id, ['n'=>$novel_id, 's'=>$section, 'u'=>$sess['id']]);
+            Cache::add($key, $qrcode, 3000);
+        }
+
+        $qrcode = base64_encode($qrcode);
+        $qrcode = 'data:image/png;base64,' . $qrcode;
+
+        return $this->result([
+            'qrcode'    =>$qrcode,
+            'view_cid'  =>$customer_id,
+            'customer_id'=>isset($sess['customer_id']) ? $sess['customer_id'] : $customer_id,
+            'n'         => $novel_id,
+            's'         =>$section
+        ]);
+    }
+    /**
+     * 获取已经生成好的带参数的二维码
+     */
+    public function WechatParamsQrcode() {
+        $wechat_qrcode_id = request()->input('wechat_qrcode');
+        if (!$wechat_qrcode_id) {
+            throw new \Exception('参数错误！', 2000);
+        }
+        $info = $this->wechatQrcodes->find($wechat_qrcode_id, $this->wechatQrcodes->model->fields);
+
+        return $this->result([
+            'qrcode'        => ($info['qrcode'] ? $info['qrcode'] : $info['img']),
+            'wechat_qrcode' => $wechat_qrcode_id,
+            'n'             => $info['novel_id'],
+            's'             => $info['section'],
+        ]);
+    }
+    /**
+     * 获取带参数的二维码；永久二维码
+     */
+    public function GetLongQRCode() {
+        $customer_id = request()->input('customer_id');
+        $scen        = request()->input('scen');
+        if (!$customer_id) exit('<h1 style="color:red;">请填写正确的 customer_id 参数；scen 附加字符串参数</h1>');
+        $wec = $this->wechats->findByMap([['status', 1], ['customer_id', $customer_id]], ['id', 'name', 'appid']);
+        if (!$wec) exit('<h1 style="color:red;">customer_id 参数异常，没有找到合适的公众号信息</h1>');
+
+        $qrcode = $this->ProductParamsQRCode($customer_id, ['c'=>$customer_id, 'str'=>$scen], 'QR_LIMIT_STR_SCENE');
+
+        $qrcode = base64_encode($qrcode);
+        $qrcode = 'data:image/png;base64,' . $qrcode;
+
+        $str = '<h1 style="color: green;">'. $wec['name'] .' 生成二维码成功！<br>可以增加 scen 增加附加参数值</h1><br><img src="'. $qrcode . '">';
+        exit($str);
+    }
+    /**
+     * 获取公众号信息
+     */
+    public function WechatInfo() {
+        $customer_id = request()->input('customer_id');
+        if (!$customer_id) {
+            throw new \Exception('参数异常4！', 2000);
+        }
+        $data = $this->wechats->findBy('customer_id', $customer_id, ['name as app_name', 'img', 'appid']);
+        if (!$data) {
+            throw new \Exception('公众号信息获取失败！', 2001);
+        }
+        $data['customer_service'] = $this->commonSets->values('service', 'customer');
+        if (strpos($data['customer_service'], 'http') === false) {
+            $data['customer_service'] = CloudPreDomain() . $data['customer_service'];
+        }
+
+        return $this->result($data);
+    }
+    /**
+     * 页面跳转
+     */
+    public function JumpTo() {
+        $passwd = request()->input('passwd');
+        if ($passwd) {
+            // 加密之后的参数链接
+            $params = json_decode(decrypt($passwd), 1);
+            $route = $params['route'];
+            $customer_id = isset($params['customer_id']) ? $params['customer_id'] : $params['cid'];
+            $dtype = isset($params['dtype']) ? $params['dtype'] : 5;
+        } else {
+            // 暴露的参数链接
+            $route = request()->input('route');
+            $customer_id = request()->input('customer_id');
+            if (!$customer_id) {
+                $customer_id = request()->input('cid');
+            }
+            $dtype = request()->input('dtype', 5);
+            $params = request()->input();
+        }
+
+        $this->resetUserViewCid($customer_id); // 重新设置 view_cid
+
+        if (!isset($params['tologin']) && $host = $this->domains->typeDomain($dtype, $customer_id)) {
+            // 跳转落地页域名
+            $hostUrl = $host . route('jumpto', $params, false);
+            return $this->clickATag($hostUrl);
+        }
+
+        unset($params['route']);
+        if (!isset($params['cid']) || !$params['cid']) {
+            // 没有cid需要设置一个cid
+            $params['cid'] = $params['customer_id'];
+        }
+
+        $pages = config('frontpage');
+        $sess = $this->loginGetSession(true);
+        if (isset($params['uid']) && $params['uid'] <=0 && $sess['id']) {
+            // 让详情页跳转阅读页
+            $params['uid'] = $sess['id'];
+        }
+
+        // 有页面地址就跳转页面地址
+        if (isset($pages[$route])) {
+            $url = $pages[$route];
+            switch ($route) {
+                case 'novel':
+                    if (isset($params['uid']) && $params['uid']>0) {
+                        $readlog = $this->readLogs->findByMap([
+                            ['user_id', $params['uid']],
+                            ['novel_id', $params['novel_id']],
+                        ], $this->readLogs->model->fields);
+                        $params['section_num'] = ($readlog && $readlog['end_section_num']) ? $readlog['end_section_num'] : 1;
+                        $url = $pages['section'];
+                        $url = str_replace(['{novel_id}', '{section_num}'], [$params['novel_id'], $params['section_num']], $url);
+                    } else {
+                        $url = str_replace('{novel_id}', $params['novel_id'], $url);  // 这里是跳转小说详情页
+                    }
+                    break;
+                case 'section':
+                case 'section_html':
+                    if (isset($params['uid']) && $params['uid']>0) {
+                        // 获取用户最新的章节阅读信息
+                        if ($readlog = $this->getUserRecentReadLog($params['uid'], $params['cid']))
+                        {
+                            $params['novel_id']     = $readlog['novel_id'];
+                            $params['section_num']  = $readlog['end_section_num'];
+                            if (isset($params['nsa1']) && $params['nsa1']==1) {
+                                // 外推进入需增加一章阅读；由于做了预加载；这里就不加 + 1章节了
+                                $params['section_num'] += 1;
+                            }
+                            unset($params['uid']);
+                        } elseif (isset($params['section_num'])) {
+                            // 有章节就跳转对应小说章节
+                        } else {
+                            // 没有阅读记录就跳转首页
+                            $url = $pages['index'];
+                        }
+                    } else if (empty($params['novel_id'])){
+                        // 没有用户信息和阅读记录就跳转首页
+                        $url = $pages['index'];
+                    }
+                    $url = str_replace(['{novel_id}', '{section_num}'], [$params['novel_id'], $params['section_num']], $url);
+                    unset($params['section']);
+                    // unset($params['novel_id']);
+                    break;
+                case 'section_out': // 带参二维码的外推页面跳转
+                    if (isset($params['wechat_qrcode']) && $params['wechat_qrcode']>0) {
+                        $url = str_replace(['{novel_id}', '{section_num}'], [$params['novel_id'], $params['section']], $url);
+                        $url = $this->domains->randOne(5, $params['cid']) . $url;
+                        foreach ($params as $k=>$v) {
+                            if (in_array($k, ['novel_id', 'section'])) continue;
+                            $url .= '&' . $k . '=' . $v;
+                        }
+                        return $this->clickATag($url);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            // 没有页面地址就跳转首页
+            $url = $pages['index'];
+        }
+
+        if ($params) {
+            // 把参数添加到后面
+            if (strpos($url, '?')) {
+                $url .= '&' . http_build_query($params);
+            } else {
+                $url .= '?' . http_build_query($params);
+            }
+        }
+
+        if ($route == 'sign') {
+            // 如果是签到页面；就要设置 jumpto 参数
+            if (strpos($url, '?')) {
+                $url .= '&jumpto=index';
+            } else {
+                $url .= '?jumpto=index';
+            }
+        }
+
+        // 以 /home/ 开头表示不是框架；不需要指定模板
+        if (strpos($url, '/home/') === 0) { } else {
+            $customer = $this->customers->find($customer_id, ['web_tpl']);
+            $url = '/' . $customer['web_tpl'] . $url;
+        }
+
+        if (!$sess['id']) {
+            // 跳转登录
+            $params['backurl'] = $url;
+            $hostUrl = route('h5wechat.login', $params, false);
+            // return $this->clickATag($hostUrl);
+            return redirect($hostUrl);
+        }
+
+        return redirect($url);
+    }
+    // 获取阅读记录；区分主/子用户
+    private function getUserRecentReadLog($user_id, $customer_id) {
+        $user = $this->users->UserCacheInfo($user_id);
+
+        $readlog = $this->readLogs->model
+            ->where('user_id', $user_id)
+            ->orderBy('updated_at', 'desc')
+            ->select($this->readLogs->model->fields)
+            ->first();
+        if (!isset($user['first_account']) || $user['first_account'] <= 0) {
+            // 当前用户（就是访问公众号形成的用户）的阅读记录
+            return $readlog;
+        } else {
+            // 主用户的阅读记录
+            $readlog2 = $this->readLogs->model
+                ->where('user_id', $user['first_account'])
+                ->orderBy('updated_at', 'desc')
+                ->select($this->readLogs->model->fields)
+                ->first();
+            if ($readlog2) {
+                $readlog = $readlog2;
+            }
+        }
+
+        return $readlog;
+    }
+
+}

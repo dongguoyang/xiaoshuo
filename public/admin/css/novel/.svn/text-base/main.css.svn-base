@@ -1,0 +1,430 @@
+.novel-list-wrapper {
+    background: transparent;
+    padding-left: 10px;
+}
+
+.pagination li {
+    padding: 0 2px !important;
+}
+
+.novel-list-wrapper .novel-categories-wrapper {
+    margin-bottom: 10px;
+    background: #fafafa;
+    border: 1px solid #ededed;
+    padding: 20px 0 20px 20px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .options {
+    position: relative;
+    padding-left: 5px;
+    height: 50px;
+    line-height: 50px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .btn-search:hover, .novel-list-wrapper .novel-categories-wrapper .btn-data-check:hover {
+    opacity: 0.8;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .btn-data-check {
+    width: auto !important;
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    transform: translateY(-50%);
+    padding: 0 5px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .btn-search, .novel-list-wrapper .novel-categories-wrapper .btn-data-check {
+    transition: all 0.3s;
+    cursor: pointer;
+    outline: none;
+    border-radius: 3px;
+    vertical-align: middle;
+    font-size: 14px;
+    width: 64px;
+    height: 38px;
+    background: #009688;
+    color: #ffffff;
+    border: 1px solid #f1f1f1;
+    line-height: 0;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .btn-data-check {
+    background: rgb(221, 75, 57);
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-search {
+    transition: all 0.3s;
+    display: inline-block;
+    vertical-align: middle;
+    background: #ffffff;
+    border-radius: 3px;
+    border: 1px solid #e5e5e5;
+    line-height: 38px;
+    height: 38px;
+    width: 156px;
+    padding-left: 10px;
+    outline: none;
+    font-size: 14px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select:hover,
+.novel-list-wrapper .novel-categories-wrapper .novel-search:hover,
+.novel-list-wrapper .novel-categories-wrapper .novel-search:focus {
+    border-color: #009688;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select {
+    clear: both;
+    border-radius: 3px;
+    display: inline-block;
+    vertical-align: middle;
+    transition: all 0.3s;
+    cursor: pointer;
+    color: #333333;
+    height: 38px;
+    line-height: 33px;
+    font-size: 12px;
+    background: #ffffff;
+    border: 1px solid #ededed;
+    position: relative;
+    min-width: 100px;
+    text-align: center;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select .arrow-icon {
+    margin-right: 15px;
+    margin-top: 16px;
+    float: right;
+    width: 8px;
+    height: 8px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select .novel-select-title {
+    margin: 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select .novel-dropdown-menu {
+    z-index: 500;
+    transform: translateY(5%);
+    border: 1px solid #ededed;
+    width: 100%;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select .novel-dropdown-menu .novel-dropdown-menu-item {
+    transition: all 0.3s;
+    background: #ffffff;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select .novel-dropdown-menu .novel-dropdown-menu-item.active,
+.novel-list-wrapper .novel-categories-wrapper .novel-select .novel-dropdown-menu .novel-dropdown-menu-item:hover {
+    color: #ffffff;
+    background: #50b08d;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-select .novel-dropdown-menu.hide {
+    z-index: -1;
+    transform: translateY(30%);
+    opacity: 0;
+    position: absolute;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-category {
+    margin-bottom: 10px;
+    line-height: 24px;
+    font-size: 0;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-category .novel-category-title,
+.novel-list-wrapper .novel-categories-wrapper .novel-category .novel-category-item {
+    vertical-align: middle;
+    display: inline-block;
+    font-size: 14px;
+    color: #333333;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-category .novel-category-title {
+    color: #333333;
+    font-weight: bold;
+    margin-left: 10px;
+    margin-right: 15px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-category .novel-category-item {
+    cursor: pointer;
+    margin-right: 5px;
+    padding: 0 6px;
+    vertical-align: middle;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.novel-list-wrapper .novel-categories-wrapper .novel-category .novel-category-item.active,
+.novel-list-wrapper .novel-categories-wrapper .novel-category .novel-category-item:hover {
+    background-color: #50b08d;
+    color: #ffffff;
+}
+
+.novel-list-wrapper .novel-list {
+    border: 1px solid #e6e6e6;
+    width: 100%;
+    font-size: 14px;
+    color: #333333;
+    background: #fafafa;
+}
+
+.novel-list-wrapper .novel-list .cover {
+    width: 100px;
+    height: 133px;
+}
+
+.novel-list-wrapper .novel-list tbody > tr {
+    background: #ffffff;
+    border-bottom: 1px solid #e6e6e6;
+    transition: background-color 0.3s;
+}
+
+.novel-list-wrapper .novel-list tbody > tr:last-of-type {
+    border: none;
+}
+
+.novel-list-wrapper .novel-list tbody > tr:hover {
+    background: #f2f2f2;
+}
+
+.novel-list-wrapper .novel-list tbody td:first-of-type {
+    border-right: 1px solid #e6e6e6;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo {
+    padding: 15px 0 15px 20px;
+    text-align: left;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo .finished,
+.novel-list-wrapper .novel-list tbody .bookinfo .continuing, .free {
+    text-align: center;
+    line-height: 16px;
+    padding: 3px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo .finished {
+    color: #ffffff;
+    background: #419488;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo .continuing {
+    color: #ffffff;
+    background: #f5ba41;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo .free {
+    color: #ffffff;
+    background: #5078f6;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo > span {
+    font-weight: bold;
+    color: #666666;
+}
+
+.novel-list-wrapper .novel-list tbody .bookinfo p {
+    line-height: 16px;
+    color: #666666;
+    margin-top: 8px;
+}
+
+.novel-list-wrapper .novel-list tbody td {
+    height: 152px;
+    border-right: 1px solid #e6e6e6;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .tui:hover {
+    opacity: 0.8;
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .tui {
+    margin: 10px auto;
+    display: block;
+    transition: all 0.3s;
+    padding: 2px 5px;
+    border-radius: 2px;
+    background: #ffffff;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #ffffff;
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .tui img {
+    margin-right: 2px;
+    transform: rotateZ(-45deg) scale(0.8);
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .edit img {
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+    transform: rotateZ(0) scale(0.8);
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .tui.out {
+    background: #1e9fff;
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .tui.in {
+    background: #ff5722;
+}
+
+.novel-list-wrapper .novel-list tbody .options-wrapper .tui.edit {
+    min-width: 104px;
+    background: #50b08d;
+}
+
+.novel-list-wrapper .novel-list > thead {
+    width: 100%;
+    height: 80px;
+}
+
+.novel-list-wrapper .novel-list > thead > tr {
+    height: 20px;
+}
+
+.novel-list-wrapper .novel-list > thead .novel-list-col-title {
+    background: #f2f2f2;
+    border-left: 1px solid #e6e6e6;
+    border-right: 1px solid #e6e6e6;
+    text-align: center;
+    height: 20px;
+    line-height: 20px;
+    font-size: 14px;
+    color: #666;
+    padding: 9px 15px;
+}
+
+.novel-list-wrapper .paginator {
+    padding: 10px 0;
+    font-size: 0;
+    text-align: center;
+}
+
+.novel-list-wrapper .paginator .disabled {
+    color: #999999;
+    cursor: not-allowed !important;
+}
+
+.novel-list-wrapper .paginator .page.disabled {
+    background: #e9e9e9;
+}
+
+.novel-list-wrapper .paginator .with-hover:hover,
+.novel-list-wrapper .paginator .page.active {
+    color: #ffffff;
+    background: #50b08d;
+}
+
+.novel-list-wrapper .paginator .paginator-prev,
+.novel-list-wrapper .paginator .paginator-next,
+.novel-list-wrapper .paginator .page {
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #e5e5e5;
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.pagebar2 {
+    position: relative;
+    width: 100%;
+    padding: 7px 7px 0;
+    border-width: 1px 0 0;
+    text-align: center;
+}
+
+.pagebar .pagination {
+    height: 30px;
+    text-align: center;
+}
+
+.pagebar .pagination li {
+    display: inline-block;
+    overflow: hidden;
+    margin: 0 3px;
+    *display: inline;
+    *zoom: 1;
+    line-height: 30px;
+    color: #666;
+    font-size: 12px;
+    padding: 0;
+}
+
+.pagebar .pagination li a, .pagebar .pagination li span {
+    display: inline-block;
+    vertical-align: top;
+    width: auto;
+    height: 28px;
+    text-align: center;
+    line-height: 28px;
+    font-size: 12px;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 0 10px;
+    background: #fff;
+}
+
+.pagebar .pagination li.active span, .pagebar .pagination li a:hover {
+    color: #fff;
+    background: #009688;
+    border: 1px solid #009688;
+}
+
+.readonly, .disabled {
+    background-color: #f1f1f1;
+}
+
+.disabled {
+    cursor: not-allowed !important;
+}
+
+.pagebar .pagination li.disabled span {
+    color: #b3b3b3;
+    background-color: #eee;
+}
+.fiction-list .chapter-list .item {
+    position: relative;
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: -1px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+.fiction-list .chapter-list .layui-inline {
+    margin-right: 10px;
+}
+.fiction-list .chapter-list i {
+    font-size: 12px;
+}
+.fiction-list .chapter-list i {
+    font-size: 12px;
+}
+.links .dropdown-menu {
+    display: none;
+}
+.fiction-list .chapter-list i {
+    font-size: 12px;
+}
+
+
+/*# sourceMappingURL=main.css.map */

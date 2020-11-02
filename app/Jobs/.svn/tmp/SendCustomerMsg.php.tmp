@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Logics\Traits\WechatTrait;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+
+class SendCustomerMsg implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, WechatTrait;
+
+    protected $msgcontent;
+    protected $customer_id;
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($customer_id, $msgcontent)
+    {
+        //
+        $this->msgcontent   = $msgcontent;
+        $this->customer_id  = $customer_id;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        //
+<<<<<<< .mine
+            $this->SendCustomMsg($this->customer_id, $this->msgcontent, true);
+        if ($this->attempts() > 3) {
+=======
+        $this->SendCustomMsg($this->customer_id, $this->msgcontent, true);
+
+        /*if ($this->attempts() > 3) {
+>>>>>>> .r769
+            Log::info('SendCustomerMsg 消息 attempts > 3 后发送失败！');
+        } */
+    }
+}

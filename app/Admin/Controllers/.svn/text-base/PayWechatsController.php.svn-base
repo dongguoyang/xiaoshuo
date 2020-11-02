@@ -1,0 +1,181 @@
+<?php
+
+namespace App\Admin\Controllers;
+
+use App\Admin\Models\PayWechat;
+use Encore\Admin\Controllers\AdminController;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Show;
+use Illuminate\Support\MessageBag;
+
+class PayWechatsController extends AdminController
+{
+    /**
+     * Title for current resource.
+     *
+     * @var string
+     */
+    protected $title = '支付公众号信息';
+
+    /**
+     * Make a grid builder.
+     *
+     * @return Grid
+     */
+    protected function grid()
+    {
+        $grid = new Grid(new PayWechat);
+
+        $grid->column('id', __('Id'));
+        $grid->column('name', __('公众号名称'));
+        $grid->column('img', __('公众号二维码'))->image('', 100, 100);
+        $grid->column('appid', __('Appid'));
+        $grid->column('appsecret', __('App秘钥'));
+
+        $grid->column('mch_id', __('商户号'));
+        $grid->column('mch_secret', __('商户秘钥'));
+        $grid->column('redirect_uri', __('授权域名'));
+        $grid->column('bak_host', __('备用授权域名'));
+        $grid->column('status', __('状态'))->switch(PayWechat::switchStatus());
+        $grid->column('updated_at', __('最近更新'));
+
+        $grid->disableExport(); // 去掉导出按钮
+        // 添加表格头部工具
+        $grid->tools(function ($actions) {
+            // $actions->prepend('<label class="btn btn-warning btn-sm"><a target="_blank" href="' . route('platform.auth') . '" title="去授权" style="color: #fff;"><i class="fa fa-podcast"></i> 去授权 </label></a>');
+            // $actions->append('<label class="btn btn-warning btn-sm"><a target="_blank" href="' . route('platform.auth') . '" title="去授权" style="color: #fff;"><i class="fa fa-podcast"></i> 去授权 </label></a>');
+            // $actions->append('<label class="confirm2doall btn btn-danger btn-sm" data-url="/'.config('admin.route.prefix').'/domains/dels" data-status="2" title="批量删除" style="color: #fff;"><i class="fa fa-minus"></i> 批量删除 </label>');
+        });
+        // 添加表格行工具
+        $uri = request()->getUri(); $uri = stripos($uri, '?') ? substr($uri, 0, stripos($uri, '?')) : $uri;
+        $grid->actions(function ($actions) use($uri) {
+            // $actions->disableDelete();// 去掉删除
+            $actions->disableEdit();// 去掉编辑
+            $actions->disableView();// 去掉查看
+            // $actions->append('<label data-url="/'.config('admin.route.prefix').'/domains/dels" data-status="2" title="删除" class="confirm2do btn btn-danger btn-xs"><i class="fa fa-trash"></i> 删除</label>');
+            $actions->append('<a href="'. $uri.'/'.$actions->getKey() .'/edit" class="grid-row-edit btn btn-xs btn-primary" title="编辑"><i class="fa fa-edit"></i> 编辑</a>');
+            $actions->append('<a href="javascript:void(0);" data-id="' .$actions->getKey(). '" class="grid-row-delete grid-row-delete2 btn btn-xs btn-danger" title="删除"><i class="fa fa-trash"></i> 删除</a>');
+        });
+        $grid->filter(function($filter){
+            $filter->disableIdFilter();// 去掉默认的id过滤器
+            $filter->column(1/2, function ($filter) {
+                $filter->like('name', '公众号');
+            });
+            $filter->column(1/2, function ($filter) {
+                $filter->equal ('appid', 'Appid');
+            });
+        });
+
+        return $grid;
+    }
+
+    /**
+     * Make a show builder.
+     *
+     * @param mixed $id
+     * @return Show
+     */
+    protected function detail($id)
+    {
+        $show = new Show(PayWechat::findOrFail($id));
+
+        $show->field('id', __('Id'));
+        $show->field('name', __('Name'));
+        $show->field('img', __('Img'));
+        $show->field('appid', __('Appid'));
+        $show->field('appsecret', __('Appsecret'));
+        $show->field('token', __('Token'));
+        $show->field('token_out', __('Token key'));
+        $show->field('status', __('Status'));
+        $show->field('updated_at', __('Updated at'));
+        $show->field('created_at', __('Created at'));
+
+        return $show;
+    }
+
+    /**
+     * Make a form builder.
+     *
+     * @return Form
+     */
+    protected function form()
+    {
+        $form = new Form(new PayWechat);
+
+        $form->text('name', __('公众号名称'))->help('请先配置公众号网页授权域名');
+        $form->image('img', __('公众号二维码'));
+        $form->text('appid', __('Appid'))->required()->help('修改之后之前建立的用户关系会失效，一个用户在不同公众号下面会变为多个用户；请知悉');
+        $form->text('appsecret', __('App秘钥'))->required();
+        // $form->text('redirect_uri', __('授权返回地址'))->help('请先配置公众号网页授权域名；http://公众号网页授权域名/payment/login2unifiedorder')->required();
+        $form->switch('status', __('状态'))->default(PayWechat::STATUS_1)->states(PayWechat::switchStatus());
+        $form->display('token', __('Token'));
+        $form->display('token_out', __('Token失效时间'));
+        $form->text('mch_id', __('商户号'))->required();
+        $form->text('redirect_uri', __('授权域名'))->required();
+        $form->text('bak_host', __('备用授权域名'));
+        $form->text('mch_secret', __('商户号API秘钥'))->required();
+        $form->multipleFile('mch_pem_dir', __('商户证书'))->disk('resource')->dir(request()->input('mch_id'));
+
+        $form->tools(function (Form\Tools $tools) {
+            // $tools->disableList();// 去掉`列表`按钮
+            $tools->disableDelete();// 去掉`删除`按钮
+            $tools->disableView();// 去掉`查看`按钮
+        });
+        $form->footer(function ($footer) {
+            $footer->disableViewCheck();// 去掉`查看`checkbox
+            $footer->disableEditingCheck();// 去掉`继续编辑`checkbox
+            $footer->disableCreatingCheck();// 去掉`继续创建`checkbox
+        });
+        $form->saving(function (Form $form) {
+            $error = new MessageBag([
+                'title'   => '出错了φ(≧ω≦*)♪',
+                'message' => '请检查配置；每次只能有一个支付号启用，且切换支付公众号之后原有的用户在不同运营账号下可能会被分割为多个用户！',
+            ]);
+
+            // 组员只能查询自己公众号信息
+            $customer = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+            if ($customer['pid']) {
+                $error = new MessageBag([
+                    'title'   => '出错了φ(≧ω≦*)♪',
+                    'message' => '只有组长可以修改支付配置！',
+                ]);
+                return back()->with(compact('error'));
+            }
+
+            if ((request()->route()->getActionMethod() == 'update')) {
+                if ($form->status == 1 || $form->status == 'on') {
+                    $id = request()->route()->parameter('paywechat');
+                    if (PayWechat::where('id', '!=', $id)->where('status', 1)->first()) {
+                        return back()->with(compact('error'));
+                    }
+                    // 更新支付授权公众号更换次数
+                    $oldinfo = PayWechat::find($id);
+                    if ($oldinfo['appid'] != request()->input('appid')) {
+                        $maxupnum = PayWechat::orderBy('up_num', 'desc')->first();
+                        $oldinfo->up_num = $maxupnum['up_num'] + 1;
+                        $oldinfo->save();
+                    }
+                }
+            } else {
+                //request()->route()->getActionMethod() == 'store'
+                if ($form->status == 1 || $form->status == 'on') {
+                    if (PayWechat::where('status', 1)->first()) {
+                        return back()->with(compact('error'));
+                    }
+                }
+            }
+        });
+        $form->saved(function (Form $form) {
+            if ((request()->route()->getActionMethod() == 'store')) {
+                // 设置支付授权公众号更换次数
+                if ($form->model()->status == 1) {
+                    $maxupnum = PayWechat::orderBy('up_num', 'desc')->first();
+                    PayWechat::where('id', $form->model()->id)->update(['up_num'=>($maxupnum['up_num'] + 1)]);
+                }
+            }
+        });
+
+        return $form;
+    }
+}

@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+    <title>...</title>
+    <style>
+        /**
+     * Eric Meyer's Reset CSS v2.0 (http://meyerweb.com/eric/tools/css/reset/)
+     * http://cssreset.com
+     */
+        html, body, div, span, applet, object, iframe,
+        h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+        a, abbr, acronym, address, big, cite, code,
+        del, dfn, em, img, ins, kbd, q, s, samp,
+        small, strike, strong, sub, sup, tt, var,
+        b, u, i, center,
+        dl, dt, dd, ol, ul, li,
+        fieldset, form, label, legend,
+        table, caption, tbody, tfoot, thead, tr, th, td,
+        article, aside, canvas, details, embed,
+        figure, figcaption, footer, header,
+        menu, nav, output, ruby, section, summary,
+        time, mark, audio, video, input {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font-weight: normal;
+            vertical-align: baseline;
+        }
+
+        /* HTML5 display-role reset for older browsers */
+        article, aside, details, figcaption, figure,
+        footer, header, menu, nav, section {
+            display: block;
+        }
+
+        html, body {
+            background: #ffffff;
+            height: 100% !important;
+            box-sizing: border-box;
+        }
+
+        .am-navbar-title {
+            font-size: .15rem !important;
+        }
+
+        .more-touch {
+            font-size: .15rem;
+        }
+
+        #root > .container {
+        }
+
+        #root {
+            background: #f1f1f1;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 26.666666666666667vw !important;
+        }
+
+        body {
+            font-size: .15rem;
+            line-height: 1;
+            background: #f1f1f1;
+        }
+
+        blockquote, q {
+            quotes: none;
+        }
+
+        blockquote:before, blockquote:after,
+        q:before, q:after {
+            content: none;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        /* custom */
+        a {
+            color: #7e8c8d;
+            text-decoration: none;
+            -webkit-backface-visibility: hidden;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        .clear_fix:after {
+            content: '.';
+            display: block;
+            clear: both;
+            height: 0;
+            overflow: hidden;
+            visibility: hidden;
+        }
+
+        .clear_fix {
+            zoom: 1;
+        }
+
+        .border-bottom {
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .more-touch {
+            padding: .15rem 0;
+        }
+
+    </style>
+    <style>
+        .mask {
+            width: 100%;
+            background: #f1f1f1;
+            position: absolute;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            height: 0.4rem;
+        }
+
+        .read2-scroller {
+            -webkit-overflow-scrolling: touch;
+            height: 100%;
+            width: 100%;
+            overflow: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        .read2-container {
+            padding-top: 0 !important;
+            background: #f1f1f1;
+            overflow-x: hidden;
+        }
+
+        .read2-container .novel-title {
+            margin-bottom: 0.4rem;
+            margin-top: 0.2rem;
+            text-align: center;
+            color: #de7c43;
+            font-size: 0.25rem;
+        }
+
+        .read2-container .content-line {
+            margin-bottom: 1.5em;
+            text-indent: 2em;
+        }
+
+        .read2-container .recommend-wrapper {
+            padding-bottom: 0.1rem;
+        }
+
+        .read2-container .recommend-wrapper .title {
+            margin-bottom: 0.15rem;
+            background: rgba(40, 40, 40, 0.05);
+            font-size: 0.15rem;
+            height: 0.44rem;
+            display: flex;
+            padding-left: 0.1rem;
+            align-items: center;
+        }
+
+        .read2-container .recommend-wrapper .recommend-link {
+            box-sizing: border-box;
+            padding: 0 0.1rem;
+            display: block;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.2rem;
+            font-size: 0.15rem;
+            line-height: 0.25rem;
+            text-decoration: underline;
+            color: #3688ff;
+        }
+
+        .read2-container .book-shelf-options {
+            text-align: center;
+            margin-top: 0.4rem;
+            font-size: 0.14rem;
+            height: 0.24rem;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+        }
+
+        .read2-container .book-shelf-options > span {
+            font-weight: bold;
+            border-radius: 0.12rem;
+            width: 1.2rem;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+        }
+
+        .read2-container .book-shelf-not-in > span {
+            font-weight: bold;
+            background: #fcf1cf;
+            border-radius: 0.12rem;
+            width: 1.2rem;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+        }
+
+        .read2-container .content {
+            padding: 0 0.15rem;
+        }
+
+        .read2-container .header {
+            padding-bottom: 0.15rem;
+            padding-top: 0.2rem;
+            position: relative;
+        }
+
+        .read2-container .header .options {
+            font-size: 0.16rem;
+            box-sizing: border-box;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffffff;
+            display: flex;
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 0.05rem;
+        }
+
+        .read2-container .header .options .am-icon {
+            padding: 0.15rem;
+        }
+
+        .read2-container .header .options .feedback {
+            padding: 0.15rem;
+        }
+
+        .read2-container .header .title {
+            width: 2rem;
+            margin: 0.03rem auto;
+            line-height: 0.25rem;
+            font-size: 0.18rem;
+            text-align: center;
+        }
+
+        .read2-container .header .subtitle {
+            font-size: 0.14rem;
+            margin-top: 0.15rem;
+            text-align: center;
+        }
+
+        .read2-container .subscribe {
+            font-weight: bold;
+            text-decoration: underline;
+            color: #ef3a3a;
+            font-size: 0.16rem;
+            text-align: center;
+        }
+
+        .read2-container .subscribe:active {
+            color: #3254ff;
+        }
+
+        .read2-container .bottom-actions {
+            position: relative;
+            justify-content: flex-end;
+            background: transparent;
+            height: 0.71rem;
+            width: 3.45rem;
+            margin: 0.3rem auto 0;
+            padding-bottom: 0.3rem;
+            align-items: center;
+        }
+
+        .read2-container .bottom-actions .menu-icon-wrapper {
+            font-size: 0.15rem;
+            display: flex;
+            align-items: center;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .read2-container .bottom-actions .btn-next {
+            float: right;
+        }
+
+        .read2-container .bottom-actions .btn-prev {
+            float: left;
+        }
+
+        .read2-container .bottom-actions .btn-chapter {
+            border: 0.01rem solid #999999;
+            font-size: 0.15rem;
+            position: relative;
+            margin-top: 0.045rem;
+            justify-content: space-around;
+            display: flex;
+            align-items: center;
+            padding: 0 0.1rem;
+            box-sizing: border-box;
+            width: 1rem;
+            height: 0.41rem;
+            border-radius: 0.05rem;
+        }
+
+        .read2-container .bottom-actions .btn-chapter > p {
+            font-weight: bold;
+        }
+
+        .read2-container .bottom-actions .menu-icon-wrapper {
+            height: 0.5rem;
+        }
+
+        .read2-container .bottom-actions .menu-icon {
+            display: block;
+            line-height: 0.5rem;
+            font-size: 0.5rem;
+        }
+
+        /*# sourceMappingURL=Read2.css.map */
+    </style>
+    <style>
+        .popup-fade-enter .read2-popup {
+            transition: all 260ms !important;
+            opacity: 0.5 !important;
+            transform: scale(0.8) translateY(-50%) translateZ(0) !important;
+        }
+
+        .popup-fade-enter-active > .read2-popup,
+        .popup-fade-enter-done .read2-popup {
+            transition: all 260ms !important;
+            transform: scale(1) translateY(-50%) translateZ(0) !important;
+            opacity: 1 !important;
+        }
+
+        .popup-fade-exit .read2-popup {
+            transition: all 260ms !important;
+            transform: scale(1) translateY(-50%) translateZ(0) !important;
+            opacity: 1 !important;
+        }
+
+        .popup-fade-exit-active .read2-popup,
+        .popup-fade-exit-done .read2-popup {
+            transition: all 260ms !important;
+            opacity: 0.5 !important;
+            transform: scale(0.8) translateY(-50%) translateZ(0) !important;
+        }
+
+        .read2-popup-container {
+            z-index: 2000;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        .read2-popup-container .barrier {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .read2-popup-container .read2-popup {
+            margin: 0 auto;
+            transition: all 260ms;
+            top: 50%;
+            position: relative;
+            z-index: 2000;
+            background: #f1f1f1;
+            border-radius: 0.05rem;
+            overflow: hidden;
+            box-sizing: border-box;
+            width: 2.5rem;
+            opacity: 1;
+            transform: scale(1) translateY(-50%);
+        }
+
+        .read2-popup-container .read2-popup > .title {
+            margin-top: 0.2rem;
+            margin-bottom: 0.12rem;
+            text-align: center;
+            font-size: 0.2rem;
+            color: #ef3a3a;
+        }
+
+        .read2-popup-container .read2-popup > .sub-title {
+            font-size: 0.12rem;
+            color: #999999;
+            text-align: center;
+            margin-bottom: 0.24rem;
+        }
+
+        .read2-popup-container .read2-popup .qrcode-wrapper {
+            margin: 0 auto 0.24rem;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 1.8rem;
+            height: 1.8rem;
+        }
+
+        .read2-popup-container .read2-popup .qrcode-wrapper > .qrcode {
+            cursor: pointer;
+            position: relative;
+            z-index: 9999;
+            height: 1.7rem;
+            width: 1.7rem;
+            display: block;
+        }
+
+        .read2-popup-container .read2-popup > .tip {
+            padding-bottom: 0.16rem;
+            font-size: 0.15rem;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 0.01rem solid #e5e5e5;
+        }
+
+        .read2-popup-container .read2-popup > .continue {
+            text-align: center;
+            margin-top: 0.2rem;
+            margin-bottom: 0.2rem;
+            font-size: 0.18rem;
+            color: #ef3a3a;
+        }
+
+        .read2-popup-container .read2-popup > .tip2 {
+            text-align: center;
+            margin: 0.2rem 0;
+            font-size: 0.12rem;
+            color: #999999;
+        }
+
+        .read2-popup-container .read2-popup > .close {
+            border-top: 0.01rem solid #e5e5e5;
+            background: #f1f1f1;
+            font-size: 0.14rem;
+            height: 0.4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #1e99d3;
+        }
+
+        .read2-popup-container .read2-popup > .close:active {
+            background: #e5e5e5;
+        }
+
+        .novel-toast {
+            background: rgba(0, 0, 0, .8);
+            z-index: 999;
+            left: 50%;
+            top: 50%;
+            transform: translateY(-50%) translateX(-50%);
+            position: fixed;
+            width: .8rem;
+            height: 0.4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: .1rem;
+        }
+
+        .novel-toast p {
+            font-size: .15rem;
+            color: #ffffff;
+            line-height: .5rem;
+        }
+
+        .loader {
+            position: fixed !important;
+            top: 50%;
+            left: 50%;
+            margin: auto;
+            margin-top: -4em;
+            margin-left: -4em;
+            font-size: .03rem;
+            text-indent: -9999em;
+            width: 8em;
+            height: 8em;
+            border-radius: 50%;
+            background: #959595;
+            background: -moz-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+            background: -webkit-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+            background: -o-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+            background: -ms-linear-gradient(left, #959595 10%, rgba(255, 255, 255, 0) 42%);
+            background: linear-gradient(to right, #959595 10%, rgba(255, 255, 255, 0) 42%);
+            position: relative;
+            -webkit-animation: load3 1.4s infinite linear;
+            animation: load3 1.4s infinite linear;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0)
+        }
+
+        .loader:before {
+            width: 50%;
+            height: 50%;
+            background: #959595;
+            border-radius: 100% 0 0 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            content: ''
+        }
+
+        .loader:after {
+            background: #fff;
+            width: 75%;
+            height: 75%;
+            border-radius: 50%;
+            content: '';
+            margin: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0
+        }
+
+        @-webkit-keyframes load3 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg)
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes load3 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg)
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg)
+            }
+        }
+
+
+        /*# sourceMappingURL=Read2Popup.css.map */
+    </style>
+</head>
+<body>
+<div id="root">
+    <div class="read2-popup-container" style="display: none;">
+        <div class="barrier"></div>
+        <div class="read2-popup"><p class="title">由于版权问题</p>
+            <p class="sub-title">请扫下方二维码继续阅读</p>
+            <div class="qrcode-wrapper"><img class="qrcode" src="" alt=""></div>
+            <p class="tip">长按上图识别二维码</p>
+            <p class="continue">继续阅读方式</p>
+            <p class="tip2">公众号菜单-【阅读记录】</p>
+            <div class="close"><span>关闭</span></div>
+        </div>
+    </div>
+    <div class="read2-scroller">
+        <div class="read2-container" style="background: rgb(255, 255, 255);">
+            <style>
+                .do-complain {
+                    box-sizing: border-box;
+                    padding-top: .1rem;
+                    padding-right: .15rem;
+                    justify-content: flex-end;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .do-complain > img {
+                    margin-right: .05rem;
+                    width: .22rem;
+                    height: .22rem;
+                }
+
+                .do-complain > p {
+                    font-size: .13rem;
+                    color: #666666;
+                }
+            </style>
+            <div class="do-complain">
+                <img class="trigger-complain" src="http://novelsys.oss-cn-shenzhen.aliyuncs.com/front/read_icon1.png"
+                     alt="">
+                <p class="trigger-complain">投诉</p>
+            </div>
+            <!--      <p class="novel-title">阴风阵阵的太子默</p>-->
+            <div id="novel-content" class="content"
+                 style="color: rgb(95, 95, 95); font-size: 0.21rem; line-height: 0.315rem;">
+            </div>
+            <p style="display: none;" class="subscribe">[追书神技能]快人一步阅读最新章节</p>
+            <div style="display: none;" class="bottom-actions">
+                <div class="btn-chapter btn-prev" style="color: rgb(95, 95, 95);"><p
+                        style="line-height: 0.4rem; height: 100%; opacity: 1;">上一章节</p></div>
+                <div class="btn-chapter btn-next" style="color: rgb(95, 95, 95);"><p
+                        style="line-height: 0.4rem; height: 100%; opacity: 1;">下一章节</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .reload-read-container {
+        left: 0;
+        top: 0;
+        z-index: 999;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        position: fixed;
+        background: rgba(0, 0, 0, .5);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .real {
+        position: relative;
+        box-sizing: border-box;
+        padding-top: .9rem;
+        width: 2.5rem;
+        height: 2.3rem;
+        display: block;
+    }
+
+    .real-bg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+    }
+
+    .real-loading {
+        margin: 0 auto;
+        position: absolute;
+        width: .43rem;
+        height: .45rem;
+        display: block;
+        left: 0;
+        right: 0;
+        top: .1rem;
+        animation: rotateInfinite infinite 1s linear;
+    }
+
+    .real-title {
+        position: relative;
+        font-size: .15rem;
+        color: #333333;
+        display: block;
+        line-height: 1.2em;
+        text-align: center;
+    }
+
+    .real-desc {
+        text-align: center;
+        position: relative;
+        font-size: .12rem;
+        color: #999999;
+        line-height: 1.2em;
+        margin-top: .2rem;
+        display: block;
+    }
+
+    .real-btn {
+        margin: .3rem auto 0;
+        position: relative;
+        width: 2.1rem;
+        height: .3rem;
+        border-radius: .15rem;
+        font-size: .14rem;
+        line-height: .3rem;
+        text-align: center;
+        color: #ffffff;
+        background: linear-gradient(to left, #ee8a29, #f6b651);
+        box-shadow: 0 0 .05rem .01rem rgba(0, 0, 0, .08);
+    }
+
+    @keyframes rotateInfinite {
+        0% {
+            transform: rotateZ(0);
+        }
+
+        100% {
+            transform: rotateZ(360deg);
+        }
+    }
+</style>
+<div class="reload-read-container" style="display: none">
+    <div class="real">
+        <img class="real-bg" src="http://novelsys.oss-cn-shenzhen.aliyuncs.com/front/real_bg.png" alt=""/>
+        <img class="real-loading" src="http://novelsys.oss-cn-shenzhen.aliyuncs.com/front/real_loading.png" alt=""/>
+        <p class="real-title">重新加载</p>
+        <p class="real-desc">网络出现错误，请点击按钮重新加载</p>
+        <div class="real-btn">重新加载</div>
+    </div>
+</div>
+<!-- <script src="https://renwuwu.oss-cn-beijing.aliyuncs.com/renwuwu/front/h5/wx_entry/js/jquery.min.js"></script> -->
+<script src="https://renwuwu.oss-cn-beijing.aliyuncs.com/renwuwu/front/h5/wx_entry/js/promise.js"></script>
+<script>
+    var Toast = {
+        loading: function (text) {
+            var prev = document.querySelector(".loader");
+            if (prev !== null) {
+                prev.remove();
+            }
+            var elem = document.createElement("div");
+            elem.className = "loader";
+            elem.innerHTML = '加载中';
+            document.body.appendChild(elem);
+        },
+        hide: function () {
+            document.querySelector(".loader").remove();
+        }
+    };
+</script>
+<script>
+    function obj2str(obj) {
+        var result = "";
+
+        var keys = Object.keys(obj);
+        for (var i = 0; i < keys.length; i++) {
+            if (obj.hasOwnProperty(keys[i])) {
+                result += (result === "" ? "" : "&") + keys[i] + "=" + obj[keys[i]];
+            }
+        }
+        return result;
+    }
+
+    // TODO 域名位置
+    // var baseUrl = "http://dev.zmr029.com/";
+    var baseUrl = "";
+    var post = function (url, params) {
+        return new Promise(function (resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", baseUrl + url);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+            var body = params === undefined
+                ? ""
+                : obj2str(params);
+
+            xhr.withCredentials = true;
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        reject(xhr);
+                    }
+                }
+            };
+            xhr.send(body);
+        });
+    };
+</script>
+<script>
+    var params = GetRequest();
+    var id = parseInt(params['novel_id']);
+    var section = parseInt(params['section']);
+    var customerId = params['cid'];
+    var prev = params["prev"];
+    var currentChapter;
+    var totalChapters;
+
+    // 创建标题
+    function createTitle(title) {
+        var elem = document.createElement("p");
+        elem.className = "novel-title";
+        elem.innerText = title;
+        return elem;
+    }
+
+    // 创建元素
+    function createLine(text) {
+        var elem = document.createElement("p");
+        elem.className = "content-line";
+        elem.innerHTML = text;
+        return elem;
+    }
+
+    // 追加元素仅content
+    function createContent(elem) {
+        document.querySelector("#novel-content").appendChild(elem);
+    }
+
+    // 获取所有url参数
+    function GetRequest() {
+        var url = window.top.location.hash;
+        var theRequest = new Object();
+        if (url.indexOf("#") != -1) {
+            var strs, str = url.substr(1);
+            strs = str.split("&");
+            for (var i = 0; i < strs.length; i++) {
+                theRequest[strs[i].split("=")[0]] = decodeURI(strs[i].split("=")[1]);
+            }
+        }
+        return theRequest;
+    }
+
+    var getNovelInfoWithExtra = (function () {
+        var extraData;
+
+        return function load(next) {
+            // 请求小说数据并初始化页面
+            var requestParams = {
+                id: id,
+                section: next === true ? section + 1 : section,
+                page: prev === "1" ? "prev" : "next",
+                cid: customerId
+            };
+            if (params["subscribe"] !== undefined) {
+                requestParams["subscribe"] = params["subscribe"];
+            }
+
+            if (requestParams.page === 'prev') {
+                extraData = undefined;
+            }
+
+            if (extraData !== undefined && (extraData.err_code !== 0 || extraData.data.num >= section)) {
+                return new Promise(function (resolve) {
+                    if (extraData.err_code === 0) {
+                        var _requestParams = JSON.parse(JSON.stringify(requestParams));
+                        _requestParams.section = extraData.data.num + 1;
+                        post("/novel/sectioninfo", _requestParams)
+                            .then(function (data) {
+                                _requestParams['pre_content'] = 1;
+                                extraData = data;
+                            });
+                    }
+
+                    resolve(extraData);
+                });
+            }
+
+            return post("/novel/sectioninfo", requestParams)
+                .then(function (data) {
+                    if (data.err_code === 0) {
+                        var _requestParams = JSON.parse(JSON.stringify(requestParams));
+                        _requestParams.section = data.data.num + 1;
+                        post("/novel/sectioninfo", _requestParams)
+                            .then(function (data) {
+                                _requestParams['pre_content'] = 1;
+                                extraData = data;
+                            });
+                    }
+
+                    return data;
+                });
+        };
+    }());
+
+    function loadContent() {
+
+        Toast.loading("加载中");
+
+        getNovelInfoWithExtra()
+            .then(function (data) {
+                if (data.err_code !== 0) {
+                    // 重置hash参数
+                    var _params = GetRequest();
+
+                    if (_params["prev"] !== undefined && _params["prev"] === "1") {
+                        _params["section"] = parseInt(_params["section"]) + 1;
+                        section = parseInt(_params["section"]) + 1;
+                        delete _params["prev"];
+                    } else {
+                        section = parseInt(_params["section"]) - 1;
+                        _params["section"] = parseInt(_params["section"]) - 1;
+                    }
+                    window.history.replaceState(null, null, window.location.origin + window.location.pathname + '#' + obj2str(_params));
+                    // window.location.hash = obj2str(_params);
+
+                    //if (data.err_code === 804 || (!isNaN(Number(params['wechat_qrcode'])) && data.err_code === 803)) { // 这句是老牟的
+                    if (data.err_code === 804 || data.err_code === 803) {
+                        document.querySelector(".read2-popup-container").style.display = "block";
+                        Toast.hide();
+                        return;
+                    }
+
+                    if (data.err_code === 802) {
+                        // 标记为已跳转支付 并跳转支付
+                        var url = "/front/#" + "/need-pay-" + id + "-" + section + ".html?cid=" + customerId;
+                        window.localStorage.setItem('payCallbackUrl', '"' + window.location.pathname + window.location.hash + '"');
+                        window.location.href = url;
+                        return;
+                    }
+
+                    return;
+                }
+                section = data.data.num;
+
+                if (!data.data.content) {
+                    document.querySelector('.reload-read-container').style.display = 'flex';
+                    return false;
+                }
+                document.querySelector('.reload-read-container').style.display = 'none';
+
+                // 设置页面标题
+                window.document.title = data.data.title;
+
+                currentChapter = data.data.num;
+                document.querySelector("#novel-content").innerHTML = "";
+                createContent(createTitle(data.data.title));
+                if (data.data.content.indexOf("<div") !== -1) {
+                    data.data.content = data.data.content.replace(/<br>|<br\/>/g, "<br>&nbsp;&nbsp;").replace(/<p/g, "<p class='content-line'");
+                } else {
+                    const elem = document.createElement("div");
+                    elem.innerHTML = data.data.content;
+                    data.data.content = [...elem.childNodes]
+                    // 过滤br标签
+                        .filter((_node) => _node.nodeName !== "BR")
+                        // 映射出文字
+                        .map((_node) => _node.nodeName === "#text" ? _node.nodeValue : _node.textContent)
+                        // 去掉前面的空格
+                        .map((_val) => {
+                            return _val === null ? "" : _val.replace(/^\s*/g, "").replace(/nbsp;/g, "");
+                        })
+                        // 生成p标签
+                        .map((_val) => `<p class="content-line">${_val}</p>`)
+                        // 合并数组为字符串
+                        .reduce((prev, next) => prev + next, "");
+                    elem.remove();
+                }
+
+                // 设置按钮显示
+                document.querySelector(".subscribe").style.display = "block";
+
+                document.querySelector(".bottom-actions").style.display = "block";
+
+                currentChapter = data.data.num;
+                totalChapters = data.data.section_count;
+
+                document.querySelector(".btn-next").style.opacity = data.data.num >= data.data.section_count ? "0.5" : "1";
+
+                document.querySelector(".btn-prev").style.opacity = data.data.num === 1 ? "0.5" : "1";
+
+                createContent(createLine(data.data.content));
+
+                var iframe = document.createElement("iframe");
+                iframe.setAttribute("src", "/front/#/index.html");
+                // 老牟用的下面我注释的这个
+                //iframe.setAttribute("src", "/front/#/index.html");
+                iframe.setAttribute("frameBorder", "0");
+                iframe.style.display = "none";
+                document.body.appendChild(iframe);
+
+                document.querySelector(".read2-scroller").scrollTop = 0;
+                Toast.hide();
+            });
+    }
+
+    window.onpageshow = function (e) {
+        if (e.persisted) {
+            window.location.reload();
+        }
+    };
+
+    window.onload = function () {
+        window.addEventListener('popstate', function (state) {
+            window.location.reload();
+        });
+
+        var elems = document.querySelectorAll('.trigger-complain');
+        for (var i = 0; i < elems.length; i++) {
+            elems[i].addEventListener('click', function () {
+                window.location.href = '/tousu';
+            });
+        }
+
+        loadContent();
+        // 请求二维码并设置
+        if (!isNaN(Number(params['wechat_qrcode']))) {
+            post("/common/wechatparamsqrcode", {wechat_qrcode: Number(params['wechat_qrcode'])})
+                .then(function (data) {
+                    document.querySelector(".qrcode").setAttribute("src", data.data.qrcode);
+                });
+        } else {
+            post("/common/productqrcode", {novel_id: id, section: section, customer_id: customerId})
+                .then(function (data) {
+                    document.querySelector(".qrcode").setAttribute("src", data.data.qrcode);
+                });
+        }
+
+
+        // 重新加载按钮的点击事件
+        document.querySelector('.real-btn').addEventListener('click', function () {
+            loadContent();
+            document.querySelector('.reload-read-container').style.display = 'none';
+        });
+
+        document.querySelector(".subscribe").onclick = function () {
+            document.querySelector(".read2-popup-container").style.display = "block";
+        };
+
+        document.querySelector(".close").addEventListener("click", function () {
+            document.querySelector(".read2-popup-container").style.display = "none";
+        });
+
+        document.querySelector(".btn-prev").addEventListener("click", function () {
+            if (currentChapter === 1 || document.querySelector(".loader") !== null) {
+                return;
+            }
+
+            section--;
+            prev = "1";
+
+            var params = GetRequest();
+            params["section"] = section;
+            if (prev !== undefined) {
+                params["prev"] = prev;
+            }
+
+            window.history.pushState(null, null, window.location.origin + window.location.pathname + '#' + obj2str(params));
+            // window.location.hash = "#" + obj2str(params);
+            loadContent();
+        });
+
+        document.querySelector(".btn-next").addEventListener("click", function () {
+            if (currentChapter >= totalChapters || document.querySelector(".loader") !== null) {
+                return;
+            }
+
+            section++;
+            prev = undefined;
+
+            var params = GetRequest();
+            params["section"] = section;
+            if (prev !== undefined) {
+                params["prev"] = prev;
+            } else {
+                delete params["prev"];
+            }
+
+            window.history.pushState(null, null, window.location.origin + window.location.pathname + '#' + obj2str(params));
+            // window.location.hash = "#" + obj2str(params);
+            loadContent();
+        });
+    };
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?1d4ce85470ad1d4b48a846ccee33af70";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+</body>
+</html>

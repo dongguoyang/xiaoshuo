@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Logics\Services\src;
+
+use App\Logics\Repositories\src\BookStoreRepository;
+use App\Logics\Repositories\src\CoinLogRepository;
+use App\Logics\Repositories\src\CommentRepository;
+use App\Logics\Repositories\src\CommonSetRepository;
+use App\Logics\Repositories\src\CouponLogRepository;
+use App\Logics\Repositories\src\CouponRepository;
+use App\Logics\Repositories\src\GoodsRepository;
+use App\Logics\Repositories\src\NovelRepository;
+use App\Logics\Repositories\src\NovelSectionRepository;
+use App\Logics\Repositories\src\PrizeLogRepository;
+use App\Logics\Repositories\src\PrizeRepository;
+use App\Logics\Repositories\src\RechargeLogRepository;
+use App\Logics\Repositories\src\RewardLogRepository;
+use App\Logics\Repositories\src\SignLogRepository;
+use App\Logics\Repositories\src\UserRepository;
+use App\Logics\Services\Service;
+use App\Logics\Traits\WechatTrait;
+use Illuminate\Support\Facades\DB;
+
+class CommonService extends Service {
+    use WechatTrait;
+
+    protected $signLogs;
+    protected $users;
+    protected $commonSets;
+    protected $coinLogs;
+    protected $rewardLogs;
+    protected $comments;
+    protected $goodses;
+    protected $boolStores;
+    protected $novels;
+    protected $novelSections;
+    protected $couponLogs;
+    protected $rechargeLogs;
+    protected $prizes;
+    protected $prizeLogs;
+    protected $coupons;
+
+	public function Repositories() {
+		return [
+		    'signLogs'      => SignLogRepository::class,
+            'commonSets'    => CommonSetRepository::class,
+            'users'         => UserRepository::class,
+            'coinLogs'      => CoinLogRepository::class,
+            'rewardLogs'    => RewardLogRepository::class,
+            'comments'      => CommentRepository::class,
+            'goodses'       => GoodsRepository::class,
+            'bookStores'    => BookStoreRepository::class,
+            'novel'         => NovelRepository::class,
+            'novelSections' => NovelSectionRepository::class,
+            'couponLogs'    => CouponLogRepository::class,
+            'rechargeLogs'  => RechargeLogRepository::class,
+            'prizes'        => PrizeRepository::class,
+            'prizeLogs'     => PrizeLogRepository::class,
+            'coupons'       => CouponRepository::class,
+		];
+	}
+
+	public function ProductQRCode() {
+        $novel_id = request()->input('novel_id');
+        $section_id = request()->input('section_id');
+        if (!$novel_id || !$section_id) {
+            throw new \Exception('参数错误！', 2000);
+        }
+        $sess = $this->loginGetSession(true);
+        $qrcode = $this->ProductParamsQRCode($sess['customer_id'], ['n'=>$novel_id, 's'=>$section_id, 'u'=>$sess['id']]);
+
+        $qrcode = base64_encode($qrcode);
+        $qrcode = 'data:image/png;base64,' . $qrcode;
+
+        return $this->result(['qrcode'=>$qrcode]);
+    }
+
+}
