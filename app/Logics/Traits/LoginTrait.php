@@ -34,9 +34,9 @@ trait LoginTrait
      * @param int $customer_id
      * @param array $sess 用户缓存信息
      */
-    public function resetUserViewCid($customer_id, $sess = []) {
+    public function resetUserViewCid($sess = []) {
         if (!$sess) {
-            $sess = $this->loginGetSession(true,$customer_id);
+            $sess = $this->loginGetSession(true);
         }
         if (!$sess || !$sess['id']) { // 没有缓存就返回
             return false;
@@ -90,7 +90,7 @@ trait LoginTrait
      * @param bool $cache 是否获取用户缓存信息
      * @return array
      */
-    public function loginGetSession($cache = false,$customer_id=0)
+    public function loginGetSession($cache = false)
     {
         $default = [
             'id'    => 0,
@@ -104,7 +104,7 @@ trait LoginTrait
             if ($cid = request()->input('customer_id')) $map[] = ['customer_id', $cid];
             $default = $this->getUserInLoginTrait()->findByMap($map, $this->getUserInLoginTrait()->model->fields);
 	    }*/
-        $sess = session('is_login_'.$customer_id, $default);
+        $sess = session('is_login', $default);
         $sess = ($sess instanceof Model) ? $sess->toArray() : $sess;
         return $cache ? $this->getUserInLoginTrait()->UserCacheInfo($sess['id']) : $sess;
     }

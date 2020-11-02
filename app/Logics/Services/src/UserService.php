@@ -601,7 +601,7 @@ class UserService extends Service {
      * 获取用户信息
      */
     public function UserInfo() {
-        $info = $this->loginGetSession(true,101);
+        $info = $this->loginGetSession(true);
         //$uncolumn = ['openid', 'unionid', 'password', 'remember_token', 'customer_id', 'platform_wechat_id'];
        $uncolumn = ['unionid', 'password', 'remember_token', 'customer_id', 'platform_wechat_id'];
         foreach ($uncolumn as $v) {

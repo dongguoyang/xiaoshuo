@@ -225,7 +225,7 @@ class CommonService extends Service {
             $params['cid'] = $params['customer_id'];
         }
         $pages = config('frontpage');
-        $sess = $this->loginGetSession(true,$customer_id);
+        $sess = $this->loginGetSession(true);
         if (isset($params['uid']) && $params['uid'] <=0 && $sess['id']) {
             // 让详情页跳转阅读页
             $params['uid'] = $sess['id'];

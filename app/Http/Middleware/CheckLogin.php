@@ -18,7 +18,7 @@ class CheckLogin
      */
     public function handle($request, \Closure $next)
     {
-        $sess = $this->loginGetSession(true,101);
+        $sess = $this->loginGetSession(true);
 
         if (!$sess['id'])
         {

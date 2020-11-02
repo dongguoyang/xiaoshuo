@@ -181,7 +181,7 @@ class NovelService extends Service {
      * 小说首页数据
      */
     public function IndexData() {
-        $sess = $this->loginGetSession(true,101);
+        $sess = $this->loginGetSession(true);
         $customer_id = (isset($sess['view_cid']) && $sess['view_cid']) ? $sess['view_cid'] : $sess['customer_id'];
         $cahce_key = $customer_id.'_'.$sess['platform_wechat_id'];
         //if(Cache::get($cahce_key)){
