@@ -11,7 +11,7 @@ class ReadNovelLogsRepository  extends Repository {
     }
 
     public function AddNumLog($customer_id,$platform_wechat_id,$novel_id,$novel_section_id,$novel){
-        $result = $this->findByMap([['customer_id'=>$customer_id],['novel_id'=>$novel_id],['novel_section_id'=>$novel_section_id]],$this->model->fields);
+        $result = $this->findByMap([['customer_id',$customer_id],['novel_id',$novel_id],['novel_section_id',$novel_section_id]],$this->model->fields);
         if($result){ //数量加一
             $this->update(['user_read_num'=>$result['user_read_num']+1],$result['id']);
         }else{ //新增数据
