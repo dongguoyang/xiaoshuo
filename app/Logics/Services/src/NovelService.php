@@ -2,6 +2,7 @@
 
 namespace App\Logics\Services\src;
 
+use App\Logics\Models\ReadNovelLogs;
 use App\Logics\Repositories\src\BookStoreRepository;
 use App\Logics\Repositories\src\CoinLogRepository;
 use App\Logics\Repositories\src\CommonSetRepository;
@@ -18,6 +19,7 @@ use App\Logics\Repositories\src\UserRepository;
 use App\Logics\Repositories\src\WechatConfigRepository;
 use App\Logics\Repositories\src\NovelPayStatisticsRepository;
 use App\Logics\Repositories\src\UserReadDayRepository;
+use App\Logics\Repositories\src\ReadNovelLogsRepository;
 use App\Logics\Services\Service;
 use App\Logics\Services\src\NovelPayStatisticsService;
 use App\Logics\Traits\OfficialAccountTrait;
@@ -46,6 +48,7 @@ class NovelService extends Service {
     protected $pageLogs;
     protected $NovelPayStatistics;
     protected $UserReadDay;
+    protected $readNovelLogs;
 
     public function Repositories() {
         return [
@@ -65,6 +68,7 @@ class NovelService extends Service {
             'pageLogs'      => PageLogRepository::class,
             'NovelPayStatistics'=>NovelPayStatisticsRepository::class,
             'UserReadDay'   =>UserReadDayRepository::class,
+            'ReadNovelLogs' =>ReadNovelLogs::class,
         ];
     }
     /**
@@ -305,6 +309,7 @@ class NovelService extends Service {
             }
             $pre_content = request()->input('pre_content', 0); // 是否预加载
             $this->readLogs->AddLog($novel, $info, $sess, intval($pre_content)); // 添加阅读记录
+            $this->readNovelLogs->AddNumLog($sess['customer_id'],$sess['platform_wechat_id'],$info['novel_id'],$info['num'],['title'=>$novel['title'],'section_title'=>$info['title']]);
         } else if ($novel['need_buy_section'] <= $info['num']) {
             throw new \Exception('请登录后操作！', 803);
         }
