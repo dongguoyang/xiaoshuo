@@ -309,7 +309,7 @@ class NovelService extends Service {
             }
             $pre_content = request()->input('pre_content', 0); // 是否预加载
             $this->readLogs->AddLog($novel, $info, $sess, intval($pre_content)); // 添加阅读记录
-            $this->readNovelLogs->AddNumLog($sess['customer_id'],$sess['platform_wechat_id'],$info['novel_id'],$info['num'],['title'=>$novel['title'],'section_title'=>$info['title']]);
+            $this->ReadNovelLogs->AddNumLog($sess['customer_id'],$sess['platform_wechat_id'],$info['novel_id'],$info['num'],['title'=>$novel['title'],'section_title'=>$info['title']]);
         } else if ($novel['need_buy_section'] <= $info['num']) {
             throw new \Exception('请登录后操作！', 803);
         }
