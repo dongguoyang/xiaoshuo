@@ -71,6 +71,8 @@ Route::group([
     $router->resource('coupon-logs', 'CouponLogController');
     $router->resource('novel_pay_logs', 'NovelPayLogController');
     $router->resource('novel_pay_info', 'NovelPayInfoController');
+    $router->resource('read_novel_logs', 'ReadNovelLogsController');
+    $router->resource('read_novel_info', 'ReadNovelInfoController');
     $router->resource('coupons', 'CouponController');
     $router->resource('goods', 'GoodsController');
     $router->resource('prizes', 'PrizeController');
@@ -207,4 +209,6 @@ Route::group([
     $router->any('getcash-logs/money2user', 'GetcashLogController@Money2User');
     //提现审核
     $router->any('getcash-logs/through', 'GetcashLogController@through');
+
+
 });
