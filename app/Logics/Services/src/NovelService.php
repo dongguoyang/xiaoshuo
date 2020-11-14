@@ -68,7 +68,7 @@ class NovelService extends Service {
             'pageLogs'      => PageLogRepository::class,
             'NovelPayStatistics'=>NovelPayStatisticsRepository::class,
             'UserReadDay'   =>UserReadDayRepository::class,
-            'ReadNovelLogs' =>ReadNovelLogs::class,
+            'ReadNovelLogs' =>ReadNovelLogsRepository::class,
         ];
     }
     /**
