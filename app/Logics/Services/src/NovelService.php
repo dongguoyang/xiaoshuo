@@ -48,7 +48,7 @@ class NovelService extends Service {
     protected $pageLogs;
     protected $NovelPayStatistics;
     protected $UserReadDay;
-    protected $readNovelLogs;
+    protected $ReadNovelLogs;
 
     public function Repositories() {
         return [
