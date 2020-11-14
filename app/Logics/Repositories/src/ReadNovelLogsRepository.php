@@ -2,6 +2,7 @@
 namespace App\Logics\Repositories\src;
 
 use App\Logics\Models\ReadNovelLogs;
+use App\Logics\Repositories\Repository;
 
 class ReadNovelLogsRepository  extends Repository {
 
