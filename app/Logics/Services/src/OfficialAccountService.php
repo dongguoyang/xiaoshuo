@@ -176,13 +176,13 @@ class OfficialAccountService extends Service {
             case 'subscribe':
                 // 关注事件
                 $this->addOrDelUserTag($wechat, $message['FromUserName'], $message['Event']); // 添加用户标签
-                $content = [
+                /*$content = [
                     "touser"=>$message['FromUserName'],
                     "msgtype"=>"text",
                     "text"=> ["content"=>"你好，欢迎关注".$wechat['name']]
-                ];
+                ];*/
                 //$content = json_encode($content);
-                $this->SendCustomMsg($wechat['customer_id'],$content);//发送关注欢迎
+                //$this->SendCustomMsg($wechat['customer_id'],$content);//发送关注欢迎
                 //数据上报
                 //$result = (new UserService())->PutTouInfo(1);
                 try {
