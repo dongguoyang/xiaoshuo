@@ -38,10 +38,12 @@ Route::any('/tx/user','App\CommonController@TxGetInfo'); //头条推广信息获
 Route::get('domaincheck/{type_id}', 'Platform\DomainCheckController@domain')->where('type_id', '[0-9]+')->name('api.check.domain'); // domains 表的域名检测
 Route::get('domaincheck/justcheckdomain', 'Platform\DomainCheckController@justCheckDomain')->name('customer.check.domain');         // domain_checks 检测域名
 Route::get('domaincheck/insertcheckdomain', 'Platform\DomainCheckController@insertCheckDomain')->name('insert.check.domain');       // 接收客户检测域名和停用域名
+Route::get('domaincheck/newcheckdomain', 'Platform\DomainCheckController@newCheck')->name('new.check.domain');       // 接收客户检测域名和停用域名
 Route::get('domaincheck/wechat', 'Platform\DomainCheckController@wechat'); // 公众号授权域名检测
 Route::get('domaincheck/paywechat', 'Platform\DomainCheckController@payWechat'); // 支付公众号授权域名检测
 
 // 公众号模式事件处理
 // http://dev.zmr029.com/api/officialaccount/wechatevent?appid=APPID 一定要跟当前公众号appid;并且不能开调试模式且只能直接输出；
 Route::any('officialaccount/wechatevent', 'Platform\OfficialAccountsController@wechatEvent')->name('officialaccount.wechatevent');       // 公众号模式的事件处理
-Route::any('officialaccount/test', 'Platform\OfficialAccountsController@test')->name('officialaccount.test');   
+Route::any('officialaccount/test', 'Platform\OfficialAccountsController@test')->name('officialaccount.test');
+Route::any('userread/log', 'Platform\UserReadController@log')->name('userread.log');

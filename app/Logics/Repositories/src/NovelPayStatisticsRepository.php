@@ -25,6 +25,52 @@ class NovelPayStatisticsRepository extends Repository {
         return $this->create($statistic_init);
     }
 
+    //获取首页展示数据
+    public function index_data($customer_id = 0){
+        $map = [];
+        if($customer_id){
+            $temp = $this->model->where('customer_id',$customer_id)->selectRaw('sum(pay_num) as sum, id,novel_id,customer_id,read_num,updated_at')->groupBy('novel_id')->orderby('sum','desc')->get();
+            $map = [
+                'customer_id'=>$customer_id
+            ];
+        }else{
+            $temp = $this->model->selectRaw('sum(pay_num) as sum, id,novel_id,customer_id,read_num,updated_at')->groupBy('novel_id')->orderby('sum','desc')->get();
+        }
+        if($temp){
+            foreach ($temp as $key=>$value){
+                $map['novel_id'] = $value['novel_id'];
+                $res = Db::table('user_read_day')->where($map)->groupBy('date_belongto')->sum('read_num');
+                if($res){
+                    $temp[$key]['read_num'] = $res;
+                }
+            }
+        }
+
+    }
+
+    //每天统计小说阅读数量
+    public function update_read_day(){
+        $beginToday = mktime(0,0,0,date('m'),date('d'),date('Y'));
+        $endToday   = mktime(0,0,0,date('m'),date('d')+1,date('Y'))-1;
+        $read_logs = DB::table('read_logs')
+            ->selectRaw('count(id) as sum, novel_id,customer_id')
+            ->whereBetween('updated_at',[$beginToday,$endToday])
+            ->groupBy('novel_id','customer_id')
+            ->get();
+        if($read_logs){
+            $datas = [];
+            foreach ($read_logs as $key=>$value){
+                $data = [
+                    'date_belongto'=>date('Y-m-d'),
+                    'customer_id'  =>$value->customer_id,
+                    'novel_id'     =>$value->novel_id,
+                    'read_num'     =>$value->sum
+                ];
+                $datas[] = $data;
+            }
+        }
+        DB::table('user_read_day')->insert($datas);
+    }
     /**
      * 获取完备的统计数据
      * @param int $group_id 组ID（实际上是组长ID，对应customer.id 和 customer.pic）

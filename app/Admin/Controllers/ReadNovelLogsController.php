@@ -50,11 +50,15 @@ class ReadNovelLogsController extends AdminController
         $grid->column('novel_id', __('小说ID'));
         $grid->column('name', __('小说名'));
         $grid->column('sum', __('阅读数量'));
+        $grid->filter(function (Grid\Filter $filter) {
+            $filter->equal('novel_id', '小说ID');
+            $filter->like('name', '小说名');
+        });
         $grid->actions(function (Grid\Displayers\Actions $actions) {
             $actions->disableView();
             $actions->disableEdit();
             $actions->disableDelete();
-            $actions->append('<a target="_blank" href="/'. config('admin.route.prefix').'/read_novel_info?novel_id='.$actions->row->novel_id .'" class="grid-row-edit btn btn-xs btn-primary" title="查看详情"><i class="fa fa-list-ol"></i> 查看详情</a>');
+            $actions->append('<a target="_blank" href="/'. config('admin.route.prefix').'/read_novel_info?sum='.$actions->row->sum.'&novel_id='.$actions->row->novel_id .'" class="grid-row-edit btn btn-xs btn-primary" title="查看详情"><i class="fa fa-list-ol"></i> 查看详情</a>');
         });
         return $grid;
     }

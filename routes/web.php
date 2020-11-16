@@ -72,6 +72,7 @@ Route::any('payment/return/{type?}', 'App\PaymentController@ReturnUrl')->name('p
 Route::any('payment/outtradenocheck','App\PaymentController@OutTradeNoCheck'); // 订单号查询接口
 Route::any('payment/login2unifiedorder','App\PaymentController@Login2Unifiedorder')->name('paymen.login2unifiedorder'); // 单独的支付公众号进行支付下单
 Route::any('payment/money_btns', 'App\PaymentController@MoneyBtns'); // 充值金额按钮
+Route::any('payment/empty_money_today', 'App\PaymentController@EmptyMoneyToday'); // 每天清空支付号的今日支付金额
 
 
 Route::any('common/jumpto', 'App\CommonController@JumpTo');// 页面跳转
