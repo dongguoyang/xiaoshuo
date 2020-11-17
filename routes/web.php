@@ -39,7 +39,9 @@ Route::any('test/test', 'TestController@test');// 测试页面
 Route::any('user/login/wechat', 'App\UserController@WechatLogin');// H5微信登录
 Route::any('user/login/wechat/{wechat_id?}', 'App\UserController@WechatLogin');// H5微信登录网页授权返回地址
 Route::any('userinfo/lgwechat', 'App\UserController@WechatLogin')->name('h5wechat.login');// H5微信登录
+Route::any('userinfo/lgwechatnew', 'App\UserController@WechatLoginNew')->name('h5wechat.newlogin');// 新H5微信登录
 Route::any('userinfo/lgwechat/{wechat_id?}', 'App\UserController@WechatLogin')->name('h5wechat.redirect');// H5微信登录网页授权返回地址
+Route::any('userinfo/lgwechatnew/{wechat_id?}', 'App\UserController@WechatLoginNew')->name('h5wechat.newredirect');// 新H5微信登录网页授权返回地址
 
 // 小说信息模板
 Route::any('novel/toindex', 'App\NovelController@ToIndex')->name('novel.toindex');// 跳转对应客户的小说模板首页
