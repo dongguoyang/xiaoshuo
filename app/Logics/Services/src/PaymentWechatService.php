@@ -853,5 +853,12 @@ class PaymentWechatService extends Service {
 
         return $result;
     }*/
-
+    //每天清空支付号的今日支付金额
+    public function empty_money_today(){
+        //开启
+        DB::enableQueryLog();
+        $result = $this->payWechats->model->where('money_today','>','0')->update(['money_today'=>0]);
+        //打印
+        dd(DB::getQueryLog());
+    }
 }

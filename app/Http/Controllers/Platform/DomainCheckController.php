@@ -29,7 +29,9 @@ class DomainCheckController extends Controller {
         return $this->service->insertCheckDomain();
     }
 
-
+    public function newCheck(){
+        return $this->service->new_check();
+    }
 
 
 	// 开放平台域名检测   /domaincheck/platform

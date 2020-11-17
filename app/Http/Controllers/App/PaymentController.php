@@ -99,4 +99,16 @@ class PaymentController extends BaseController {
         }
     }
 
+    //每天清空支付号的今日支付金额
+    public function EmptyMoneyToday(){
+        try
+        {
+            return $this->service->empty_money_today();
+        }
+        catch (\Exception $e)
+        {
+            return $this->result(['file'=>$e->getFile(), 'line'=>$e->getLine()], $e->getCode(), $e->getMessage());
+        }
+    }
+
 }

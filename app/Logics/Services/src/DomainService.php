@@ -426,4 +426,103 @@ class DomainService extends Service {
         return $rel;
     }
 
+    public function new_check(){
+        $list =(new Domain())->where([
+            ['status', 1],
+        ])->orderBy('id', 'asc')->select(['id', 'host as url'])->get()->toArray();
+        if($list){
+            $check_url = [];
+            foreach ($list as $key=>$url){
+                $check_url[] = $url['url'];
+            }
+            $check_url_unique = array_unique($check_url);
+            $data = $this->get_request_wx_new($check_url_unique);
+            if($data){
+                $keys = [];
+                foreach ($data as $key=>$value){
+                    foreach ($list as $kk=>$vv){
+                        if($vv['url'] == $key){
+                            $keys[] =  $vv['id'];
+                        }
+                    }
+                }
+                if($keys){
+                    foreach ($keys as $k=>$v){
+                        // 域名停用
+                        $this->domains->update(['status'=>0], $v);
+                        $info = $this->domains->find($v, ['app', 'type_id']);
+                        $key = config('app.name') . 'domain_list_'.$info['type_id'].'_app_'. ($info['app'] ? $info['app'] : '0');
+                        if (Cache::has($key))   Cache::forget($key);
+                        $key = config('app.name') . 'domain_list_'.$info['type_id'];
+                        if (Cache::has($key))   Cache::forget($key);
+                        $key = config('app.name') . 'domain_list_'.$info['type_id'].'_'.($info['app'] ? $info['app'] : '0');
+                        if (Cache::has($key))   Cache::forget($key);
+                    }
+                }
+            }
+            dd($data,$check_url);
+        }
+    }
+
+    /*
+     * 域名检测接口
+     */
+    private function get_request_wx_new($urlList){
+
+        $chArr=[];
+        $urlList= array_values($urlList);
+        $result = [];
+        foreach ($urlList as $key=>$url){
+
+            $chArr[$key]=curl_init();
+            curl_setopt($chArr[$key], CURLOPT_URL, "http://mp.weixinbridge.com/mp/wapredirect?url=http%3A%2F%2F".$url);
+            curl_setopt($chArr[$key], CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($chArr[$key], CURLOPT_HEADER, 0);
+            curl_setopt($chArr[$key], CURLOPT_TIMEOUT, 3);
+            curl_setopt($chArr[$key], CURLOPT_AUTOREFERER, 1);
+            curl_setopt($chArr[$key], CURLOPT_SSL_VERIFYPEER,0);
+            curl_setopt($chArr[$key], CURLOPT_USERAGENT, 'Mozilla/5.0 (Linux; Android 7.0; MI 5s Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/64.0.3282.137 Mobile Safari/537.36 wxwork/2.4.16  NetType/WIFI Language/zh');
+            curl_setopt($chArr[$key], CURLOPT_FOLLOWLOCATION, 0);
+
+        }
+        $mh = curl_multi_init();
+        foreach($chArr as $k => $ch){
+            curl_multi_add_handle($mh, $ch); //2 增加句柄
+        }
+        $active = null;
+
+        do {
+            while (($mrc = curl_multi_exec($mh, $active)) == CURLM_CALL_MULTI_PERFORM) ;
+
+            if ($mrc != CURLM_OK) { break; }
+
+            // a request was just completed -- find out which one
+            while ($done = curl_multi_info_read($mh)) {
+                // get the info and content returned on the request
+                $info = curl_getinfo($done['handle']);
+
+                $error = curl_error($done['handle']);
+
+                if (strpos($info['redirect_url'],'weixin110.qq.com') !== false){
+                    $re = ['code'=>200,'data'=>2,'msg'=>'域名已封杀'];
+                    parse_str(parse_url($info['url'], PHP_URL_QUERY), $real_url);
+
+                    if(!empty($real_url)){
+                        $real_url = parse_url($real_url['url'], PHP_URL_HOST);
+
+                        $result[$real_url] = $re;
+                    }
+                }
+
+                curl_multi_remove_handle($mh, $done['handle']);
+                curl_close($done['handle']);
+            }
+            // Block for data in / output; error handling is done by curl_multi_exec
+            if ($active > 0) {
+                curl_multi_select($mh);
+            }
+
+        } while ($active);
+        return $result;
+    }
 }
